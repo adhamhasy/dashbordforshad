@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shahd | Alexandria</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div id="toast" class="luxury-toast">Added to bag ✨</div>
+    <div id="successToast" class="success-toast">✨ Ordered Successfully! We will contact you soon.</div>
+
+    <nav class="navbar sticky-top p-3">
+        <div class="container bg-white rounded-pill shadow-sm py-2 px-4">
+            <a class="navbar-brand fw-bold text-dark" href="#" style="letter-spacing:4px">SHAHD</a>
+            <button class="btn border-0" onclick="openCheckout()">
+                <span style="font-size: 1.5rem;">👜</span>
+                <span id="cart-count" class="badge bg-dark rounded-pill">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <input type="text" id="searchInput" class="form-control rounded-pill border-0 shadow-sm p-3"
+            placeholder="Search fragrances..." onkeyup="filterPerfumes()">
+    </div>
+
+    <div class="container my-5">
+        <div class="row g-3" id="product-list"></div>
+    </div>
+
+    <div class="modal fade" id="cartModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 rounded-5">
+                <div class="modal-body p-4">
+                    <h5 class="fw-bold mb-4">Your Bag Items</h5>
+                    <div id="cart-items-list" class="mb-4"></div>
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <input type="text" id="name" class="form-control mb-2 luxury-input bg-light border-0"
+                                placeholder="Full Name">
+                            <input type="tel" id="phone" class="form-control mb-2 luxury-input bg-light border-0"
+                                placeholder="Phone (01xxxxxxxxx)">
+                            <select id="area" class="form-select luxury-input bg-light border-0">
+                                <option value="" disabled selected>Select Delivery Area</option>
+
+                                <optgroup label="East (Montaza/Asafra/Sidi Beshr)">
+                                    <option>Abu Qir</option>
+                                    <option>Maamoura</option>
+                                    <option>Montaza</option>
+                                    <option>Mandara Bahary</option>
+                                    <option>Mandara Kebly</option>
+                                    <option>Asafra Bahary</option>
+                                    <option>Asafra Kebly</option>
+                                    <option>Miami</option>
+                                    <option>Sidi Beshr Bahary</option>
+                                    <option>Sidi Beshr Kebly</option>
+                                    <option>Victoria</option>
+                                    <option>Siouf</option>
+                                    <option>Awayed</option>
+                                </optgroup>
+
+                                <optgroup label="Central (Smouha/Sidi Gaber/Glim)">
+                                    <option>Loran</option>
+                                    <option>San Stefano</option>
+                                    <option>Glim</option>
+                                    <option>Zizinia</option>
+                                    <option>Bakous</option>
+                                    <option>Saba Pasha</option>
+                                    <option>Roushdy</option>
+                                    <option>Kafr Abdo</option>
+                                    <option>Stanley</option>
+                                    <option>Sidi Gaber</option>
+                                    <option>Smouha</option>
+                                    <option>Cleopatra</option>
+                                    <option>Sporting</option>
+                                    <option>Ibrahimeya</option>
+                                    <option>Camp Shezar</option>
+                                    <option>Azarita</option>
+                                </optgroup>
+
+                                <optgroup label="Downtown & West">
+                                    <option>Manshia</option>
+                                    <option>Bahary (Anfoushi)</option>
+                                    <option>Gomrok</option>
+                                    <option>Labban</option>
+                                    <option>Attarin</option>
+                                    <option>Moharem Bek</option>
+                                    <option>Hadara</option>
+                                    <option>Karmouz</option>
+                                    <option>Amreya</option>
+                                </optgroup>
+
+                                <optgroup label="Agami & Far West">
+                                    <option>Dekheila</option>
+                                    <option>Bitash (Agami)</option>
+                                    <option>Hanooville (Agami)</option>
+                                    <option>Abu Talat</option>
+                                    <option>October (Agami)</option>
+                                    <option>King Mariout</option>
+                                    <option>Borg El Arab</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="p-4 bg-cream rounded-4 text-center">
+                                <h4 class="fw-bold"><span id="total-price">0</span> EGP</h4>
+                                <button class="btn btn-dark w-100 mt-2 rounded-pill py-2 fw-bold"
+                                    onclick="confirmOrder()">PLACE ORDER</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>

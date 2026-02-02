@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shahd Dashboard | Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+
+        body {
+            background: #f4f7f6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            padding: 20px;
+        }
+
+        .section-card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: none;
+            margin-bottom: 30px;
+        }
+
+        .btn-luxury {
+            background: #2D2926;
+            color: white;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        .btn-luxury:hover {
+            background: #D4AF37;
+            color: white;
+        }
+
+        /* Drag & Drop Area */
+        #drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        #drop-zone.dragover {
+            background: #e9ecef;
+            border-color: #D4AF37;
+        }
+
+        #preview-img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 15px;
+            display: none;
+            margin: 10px auto;
+        }
+
+        .order-card {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: 0.3s;
+        }
+
+        .table img {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container-fluid">
+        <h2 class="fw-bold mb-5">Shahd Manager Dashboard 🛡️</h2>
+
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="section-card">
+                    <h4 class="fw-bold mb-4">Product Management</h4>
+                    <div class="row g-3">
+                        <input type="hidden" id="editing-id">
+
+                        <div class="col-12">
+                            <label class="small fw-bold">Perfume Name</label>
+                            <input type="text" id="p-name" class="form-control" placeholder="Midnight Stanley">
+                        </div>
+
+                        <div class="col-6">
+                            <label class="small fw-bold">Original Price</label>
+                            <input type="number" id="p-price" class="form-control" placeholder="1500">
+                        </div>
+
+                        <div class="col-6">
+                            <label class="small fw-bold">Sale Price (Optional)</label>
+                            <input type="number" id="p-discount" class="form-control" placeholder="1200">
+                        </div>
+
+                        <div class="col-12">
+                            <label class="small fw-bold">Product Image</label>
+                            <div id="drop-zone">
+                                <p id="upload-status" class="mb-0 text-muted">Drag & Drop Image or Click to Select</p>
+                                <img id="preview-img" src="">
+                                <input type="file" id="p-file" hidden accept="image/*">
+                                <input type="hidden" id="p-img-data">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <button class="btn btn-luxury w-100 py-3 mt-3" onclick="saveProduct()">SAVE TO SHOP</button>
+                        </div>
+                    </div>
+
+                    <hr class="my-5">
+                    <h5 class="fw-bold mb-3">Inventory</h5>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <tbody id="inventory-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="section-card">
+                    <h4 class="fw-bold mb-4">Live Orders 📥</h4>
+                    <div id="order-container" class="row"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, ref, push, set, onValue, remove } from './firebase-config.js';
+
+        const fileInput = document.getElementById('p-file');
+        const dropZone = document.getElementById('drop-zone');
+        const imgPreview = document.getElementById('preview-img');
+        const statusText = document.getElementById('upload-status');
+        const hiddenImgInput = document.getElementById('p-img-data');
+
+        // --- IMAGE HANDLING (Base64 - No Billing Needed) ---
+        dropZone.onclick = () => fileInput.click();
+
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        };
+
+        fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+        function handleFile(file) {
+            if (!file) return;
+            if (file.size > 1000000) return alert("Image too large! Please use a smaller photo (under 1MB).");
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64String = e.target.result;
+                hiddenImgInput.value = base64String;
+                imgPreview.src = base64String;
+                imgPreview.style.display = "block";
+                statusText.innerText = "✅ Image Ready";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- PRODUCT LOGIC ---
+        window.saveProduct = async () => {
+            const id = document.getElementById('editing-id').value;
+            const name = document.getElementById('p-name').value;
+            const price = document.getElementById('p-price').value;
+            const discount = document.getElementById('p-discount').value;
+            const imgData = hiddenImgInput.value;
+
+            if (!name || !price || !imgData) return alert("Fill Name, Price and Image!");
+
+            const data = { name, price, discountPrice: discount || null, img: imgData };
+
+            if (id) {
+                await set(ref(db, 'products/' + id), data);
+                document.getElementById('editing-id').value = "";
+            } else {
+                await push(ref(db, 'products'), data);
+            }
+
+            // Clear Form
+            document.querySelectorAll('input').forEach(i => i.value = "");
+            imgPreview.style.display = "none";
+            statusText.innerText = "Drag & Drop Image or Click to Select";
+            alert("Product Saved!");
+        };
+
+        onValue(ref(db, 'products'), (snap) => {
+            const data = snap.val();
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = "";
+            for (let id in data) {
+                const p = data[id];
+                list.innerHTML += `
+                    <tr>
+                        <td><img src="${p.img}"></td>
+                        <td class="small fw-bold">${p.name}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-dark me-1" onclick="editProduct('${id}', '${p.name}', '${p.price}', '${p.discountPrice || ''}', '${p.img}')">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteProduct('${id}')">×</button>
+                        </td>
+                    </tr>`;
+            }
+        });
+
+        window.editProduct = (id, name, price, discount, img) => {
+            document.getElementById('editing-id').value = id;
+            document.getElementById('p-name').value = name;
+            document.getElementById('p-price').value = price;
+            document.getElementById('p-discount').value = discount;
+            hiddenImgInput.value = img;
+            imgPreview.src = img;
+            imgPreview.style.display = "block";
+            window.scrollTo(0, 0);
+        };
+
+        window.deleteProduct = (id) => { if (confirm("Delete?")) remove(ref(db, 'products/' + id)); };
+
+        // --- ORDERS LOGIC ---
+        onValue(ref(db, 'orders'), (snap) => {
+            const container = document.getElementById('order-container');
+            container.innerHTML = "";
+            const data = snap.val();
+            if (!data) return container.innerHTML = "<p class='text-muted text-center py-5'>Waiting for orders...</p>";
+
+            Object.keys(data).reverse().forEach(id => {
+                const o = data[id];
+                container.innerHTML += `
+                    <div class="col-12 mb-3">
+                        <div class="card order-card p-3 bg-white">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="fw-bold mb-0">${o.custName}</h6>
+                                <span class="fw-bold text-success">${o.total} EGP</span>
+                            </div>
+                            <small class="text-muted d-block mb-2">${o.custArea}</small>
+                            <p class="small mb-2"><strong>Items:</strong> ${o.items}</p>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <a href="tel:${o.custPhone}" class="btn btn-sm btn-outline-primary rounded-pill">Call ${o.custPhone}</a>
+                                <button class="btn btn-sm btn-dark rounded-pill" onclick="clearOrder('${id}')">Done</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        window.clearOrder = (id) => { if (confirm("Clear order?")) remove(ref(db, 'orders/' + id)); };
+    </script>
+</body>
+
+</html>
