@@ -28,9 +28,8 @@ body {
 }
 
 .card img {
-  aspect-ratio: 1 / 1; /* Forces square shape */
-  object-fit: cover; /* Centers and crops so it doesn't look stretched */
-
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
   border-radius: 15px;
   padding: 10px;
 }
@@ -77,13 +76,14 @@ body {
 .badge {
   background-color: var(--gold) !important;
 }
-/* Success Toast (Greenish/Creamy Dark) */
+
+/* Success Toast */
 .success-toast {
   position: fixed;
   bottom: -100px;
   left: 50%;
   transform: translateX(-50%);
-  background: #2d3436; /* Dark slate for high contrast */
+  background: #2d3436;
   color: #f1f2f6;
   padding: 16px 40px;
   border-radius: 50px;
@@ -97,8 +97,19 @@ body {
 .show-success {
   bottom: 40px !important;
 }
+
 .card-img-top {
-  aspect-ratio: 1 / 1; /* Forces square shape */
-  object-fit: cover; /* Centers and crops so it doesn't look stretched */
-  border-radius: 15px; /* Keeps the rounded look you wanted */
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
+/* Star Rating Hover Effects */
+.star-rating span {
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
+
+.star-rating span:hover {
+  transform: scale(1.35);
 }
