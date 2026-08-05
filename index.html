@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kareem Dashboard | Manager</title>
+    <title kareem, Dashboard | Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
@@ -36,7 +36,6 @@
             color: white;
         }
 
-        /* Drag & Drop Area */
         #drop-zone {
             border: 2px dashed #ccc;
             border-radius: 20px;
@@ -80,7 +79,7 @@
 <body>
 
     <div class="container-fluid">
-        <h2 class="fw-bold mb-5">Kareem Manager Dashboard</h2>
+        <h2 class="fw-bold mb-5">kareem Manager Dashboard</h2>
 
         <div class="row">
             <div class="col-lg-5">
@@ -91,17 +90,48 @@
 
                         <div class="col-12">
                             <label class="small fw-bold">Product Name</label>
-                            <input type="text" id="p-name" class="form-control" placeholder="usb-c">
+                            <input type="text" id="p-name" class="form-control" placeholder="product name">
+                        </div>
+
+                        <!-- Category Selection -->
+                        <div class="col-12">
+                            <label class="small fw-bold">Category</label>
+                            <input type="text" id="p-category" class="form-control" list="category-options" placeholder="Cable, Phone Case, Charger, etc.">
+                            <datalist id="category-options">
+                                <option value="Cable">
+                                <option value="Phone Case">
+                                <option value="Charger">
+                                <option value="Audio">
+                                <option value="Accessories">
+                            </datalist>
+                        </div>
+
+                        <!-- Color Sub-Filter -->
+                        <div class="col-6">
+                            <label class="small fw-bold">Color(s)</label>
+                            <input type="text" id="p-color" class="form-control" placeholder="Black, White, Gold">
+                        </div>
+
+                        <!-- Phone Type / Model Sub-Filter -->
+                        <div class="col-6">
+                            <label class="small fw-bold">Phone Type / Model</label>
+                            <input type="text" id="p-phonetype" class="form-control" placeholder="iPhone 15, Samsung S24">
                         </div>
 
                         <div class="col-6">
-                            <label class="small fw-bold">Original Price</label>
+                            <label class="small fw-bold">Original Price (EGP)</label>
                             <input type="number" id="p-price" class="form-control" placeholder="1500">
                         </div>
 
                         <div class="col-6">
                             <label class="small fw-bold">Sale Price (Optional)</label>
                             <input type="number" id="p-discount" class="form-control" placeholder="1200">
+                        </div>
+
+                        <!-- Description & Specs -->
+                        <div class="col-12">
+                            <label class="small fw-bold">Details & Specs (Type, length, material, etc.)</label>
+                            <textarea id="p-desc" class="form-control" rows="3" placeholder="e.g. Type-C to Lightning Cable, Braided nylon, 1 Meter length, supports fast charging."></textarea>
                         </div>
 
                         <div class="col-12">
@@ -147,7 +177,7 @@
         const statusText = document.getElementById('upload-status');
         const hiddenImgInput = document.getElementById('p-img-data');
 
-        // --- IMAGE HANDLING (Base64 - No Billing Needed) ---
+        // --- IMAGE HANDLING ---
         dropZone.onclick = () => fileInput.click();
 
         dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
@@ -179,13 +209,26 @@
         window.saveProduct = async () => {
             const id = document.getElementById('editing-id').value;
             const name = document.getElementById('p-name').value;
+            const category = document.getElementById('p-category').value || "Other";
+            const color = document.getElementById('p-color').value || "";
+            const phoneType = document.getElementById('p-phonetype').value || "";
             const price = document.getElementById('p-price').value;
             const discount = document.getElementById('p-discount').value;
+            const description = document.getElementById('p-desc').value;
             const imgData = hiddenImgInput.value;
 
             if (!name || !price || !imgData) return alert("Fill Name, Price and Image!");
 
-            const data = { name, price, discountPrice: discount || null, img: imgData };
+            const data = {
+                name,
+                category,
+                color,
+                phoneType,
+                price,
+                discountPrice: discount || null,
+                description: description || "",
+                img: imgData
+            };
 
             if (id) {
                 await set(ref(db, 'products/' + id), data);
@@ -195,7 +238,7 @@
             }
 
             // Clear Form
-            document.querySelectorAll('input').forEach(i => i.value = "");
+            document.querySelectorAll('input, textarea').forEach(i => i.value = "");
             imgPreview.style.display = "none";
             statusText.innerText = "Drag & Drop Image or Click to Select";
             alert("Product Saved!");
@@ -210,20 +253,29 @@
                 list.innerHTML += `
                     <tr>
                         <td><img src="${p.img}"></td>
-                        <td class="small fw-bold">${p.name}</td>
+                        <td>
+                            <div class="small fw-bold">${p.name}</div>
+                            <span class="badge bg-secondary">${p.category || 'Other'}</span>
+                            ${p.color ? `<span class="badge bg-dark">${p.color}</span>` : ""}
+                            ${p.phoneType ? `<span class="badge bg-info text-dark">${p.phoneType}</span>` : ""}
+                        </td>
                         <td class="text-end">
-                            <button class="btn btn-sm btn-outline-dark me-1" onclick="editProduct('${id}', '${p.name}', '${p.price}', '${p.discountPrice || ''}', '${p.img}')">Edit</button>
+                            <button class="btn btn-sm btn-outline-dark me-1" onclick="editProduct('${id}', '${p.name.replace(/'/g, "")}', '${p.category || ""}', '${p.color || ""}', '${p.phoneType || ""}', '${p.price}', '${p.discountPrice || ""}', '${(p.description || "").replace(/'/g, "")}', '${p.img}')">Edit</button>
                             <button class="btn btn-sm btn-danger" onclick="deleteProduct('${id}')">×</button>
                         </td>
                     </tr>`;
             }
         });
 
-        window.editProduct = (id, name, price, discount, img) => {
+        window.editProduct = (id, name, category, color, phoneType, price, discount, description, img) => {
             document.getElementById('editing-id').value = id;
             document.getElementById('p-name').value = name;
+            document.getElementById('p-category').value = category;
+            document.getElementById('p-color').value = color;
+            document.getElementById('p-phonetype').value = phoneType;
             document.getElementById('p-price').value = price;
             document.getElementById('p-discount').value = discount;
+            document.getElementById('p-desc').value = description;
             hiddenImgInput.value = img;
             imgPreview.src = img;
             imgPreview.style.display = "block";
