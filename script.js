@@ -678,42 +678,51 @@ window.confirmOrder = async () => {
     alert("Error sending order. Please try again!");
   }
 };
+
 // ==========================================================
-// ADDED: Automatic Image Compression Helper (< 1 MB limit)
+// FIXED: Automatic Image Compression Before Validation
 // ==========================================================
 document.addEventListener("DOMContentLoaded", () => {
   const imageInput = document.getElementById("imageInput");
   if (!imageInput) return;
 
+  // Using { capture: true } guarantees this runs BEFORE any validation scripts.
   imageInput.addEventListener("change", async (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
+    // 1. If already compressed or under 1 MB, allow validation scripts to run normally
+    if (file.size <= 1024 * 1024 || file._isCompressed) return;
+
+    // 2. STOP your other validation/upload scripts from checking the original large file right now
+    event.stopImmediatePropagation();
+    event.preventDefault();
+
     try {
-      // 1. Compress the image well below 1 MB
+      // 3. Compress the image well below 1 MB
       const compressedFile = await compressImageByQuality(file, 1);
-      
-      // 2. CRITICAL FIX: Overwrite the input's actual .files array using DataTransfer
-      // Without this, your form/upload script still sees the original multi-megabyte camera file!
+      compressedFile._isCompressed = true; // prevent infinite loops
+
+      // 4. Overwrite the input's actual .files array using DataTransfer
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(compressedFile);
       imageInput.files = dataTransfer.files;
 
-      // 3. Update DOM preview if an element with id="imagePreview" exists
+      // 5. Update DOM preview if an element with id="imagePreview" exists
       const previewEl = document.getElementById("imagePreview");
       if (previewEl) {
         previewEl.src = URL.createObjectURL(compressedFile);
         previewEl.style.display = "block";
       }
 
-      // 4. Dispatch custom event if any other script needs to listen for it
-      document.dispatchEvent(new CustomEvent("imageCompressed", {
-        detail: { file: compressedFile }
-      }));
+      // 6. NOW manually trigger a new change event so validation scripts run against the <1 MB file
+      const newEvent = new Event("change", { bubbles: true });
+      imageInput.dispatchEvent(newEvent);
+
     } catch (err) {
       console.error("Image compression error:", err);
     }
-  });
+  }, { capture: true });
 });
 
 /**
@@ -737,9 +746,7 @@ async function compressImageByQuality(file, maxSizeMB = 1) {
   let width = image.width;
   let height = image.height;
 
-  // CRITICAL FIX for camera photos:
-  // Phone cameras shoot at 4000px-8000px+. We cap the initial dimension at 2048px
-  // so the browser canvas doesn't choke and the file size drops immediately.
+  // Scale down phone camera images (often 4000px-8000px wide) so canvas processing is fast
   const MAX_DIMENSION = 2048;
   if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
     if (width > height) {
