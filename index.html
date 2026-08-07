@@ -1,141 +1,376 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap");
+<!DOCTYPE html>
+<html lang="en">
 
-:root {
-  --cream-bg: #faf9f6;
-  --dark: #2d2926;
-  --gold: #d4af37;
-  --white: #ffffff;
-}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kareem Store | Manager Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
 
-[data-bs-theme="dark"] {
-  --cream-bg: #121212;
-  --dark: #f8f9fa;
-  --gold: #d4af37;
-}
+        body {
+            background: #f4f7f6;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            padding: 20px;
+        }
 
-body {
-  background-color: var(--cream-bg);
-  font-family: "Plus Jakarta Sans", sans-serif;
-}
+        .section-card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            border: none;
+            margin-bottom: 30px;
+        }
 
-.cursor-pointer {
-  cursor: pointer;
-}
+        .btn-luxury {
+            background: #2D2926;
+            color: white;
+            border-radius: 50px;
+            font-weight: 600;
+        }
 
-/* Skeleton Loading Animation (#18) */
-.skeleton-card-item {
-  animation: pulse 1.5s infinite ease-in-out;
-}
+        .btn-luxury:hover {
+            background: #D4AF37;
+            color: white;
+        }
 
-.skeleton-img {
-  width: 100%;
-  aspect-ratio: 1/1;
-  background-color: #e0e0e0;
-  border-radius: 20px;
-}
+        #drop-zone {
+            border: 2px dashed #ccc;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            background: #fafafa;
+            cursor: pointer;
+            transition: 0.3s;
+        }
 
-.skeleton-text {
-  height: 14px;
-  background-color: #e0e0e0;
-  border-radius: 4px;
-  width: 80%;
-}
+        #drop-zone.dragover {
+            background: #e9ecef;
+            border-color: #D4AF37;
+        }
 
-.skeleton-text.short {
-  width: 40%;
-}
+        #preview-img {
+            width: 90px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 15px;
+            display: none;
+            margin: 10px auto;
+        }
 
-@keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
-}
+        .order-card {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: 0.3s;
+        }
 
-/* Rounded Product Cards */
-.card {
-  border: none;
-  border-radius: 20px !important;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
-}
+        .table img {
+            width: 45px;
+            height: 45px;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+    </style>
+</head>
 
-.card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
-}
+<body>
 
-.btn-luxury {
-  background-color: var(--dark);
-  color: var(--white);
-  border: none;
-  font-weight: 700;
-  transition: 0.3s;
-}
+    <div class="container-fluid">
+        <h2 class="fw-bold mb-5">Kareem Manager Dashboard</h2>
 
-.btn-luxury:hover {
-  background-color: var(--gold);
-  color: white;
-}
+        <div class="row">
+            <div class="col-lg-5">
+                <div class="section-card">
+                    <h4 class="fw-bold mb-4">Product Management</h4>
+                    <div class="row g-3">
+                        <input type="hidden" id="editing-id">
 
-/* Sort Modal Option Buttons */
-.btn-sort-option {
-  background-color: var(--bs-tertiary-bg);
-  color: var(--bs-body-color);
-  border: 1px solid transparent;
-  transition: all 0.2s ease;
-}
+                        <div class="col-12">
+                            <label class="small fw-bold">Product Name</label>
+                            <input type="text" id="p-name" class="form-control" placeholder="Product name">
+                        </div>
 
-.btn-sort-option.active {
-  background-color: var(--bs-primary);
-  color: white;
-}
+                        <div class="col-12">
+                            <label class="small fw-bold">Category</label>
+                            <input type="text" id="p-category" class="form-control" list="category-options" placeholder="Cable, Phone Case, Charger, etc.">
+                            <datalist id="category-options">
+                                <option value="Cable">
+                                <option value="Phone Case">
+                                <option value="Charger">
+                                <option value="Audio">
+                                <option value="Accessories">
+                            </datalist>
+                        </div>
 
-/* Toast Alerts */
-.luxury-toast {
-  position: fixed;
-  bottom: -80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--dark);
-  color: white;
-  padding: 15px 40px;
-  border-radius: 50px;
-  transition: 0.5s;
-  z-index: 9999;
-}
+                        <div class="col-6">
+                            <label class="small fw-bold">Color(s)</label>
+                            <input type="text" id="p-color" class="form-control" placeholder="Black, White, Gold">
+                        </div>
 
-.show-toast {
-  bottom: 30px !important;
-}
+                        <div class="col-6">
+                            <label class="small fw-bold">Phone Type / Model</label>
+                            <input type="text" id="p-phonetype" class="form-control" placeholder="iPhone 15, Samsung S24">
+                        </div>
 
-.success-toast {
-  position: fixed;
-  bottom: -100px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #2d3436;
-  color: #f1f2f6;
-  padding: 16px 40px;
-  border-radius: 50px;
-  transition: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  z-index: 10000;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
+                        <div class="col-4">
+                            <label class="small fw-bold">Original Price</label>
+                            <input type="number" id="p-price" class="form-control" placeholder="1500">
+                        </div>
 
-.show-success {
-  bottom: 40px !important;
-}
+                        <div class="col-4">
+                            <label class="small fw-bold">Sale Price</label>
+                            <input type="number" id="p-discount" class="form-control" placeholder="1200">
+                        </div>
 
-.star-rating span {
-  transition: transform 0.15s ease;
-  display: inline-block;
-}
+                        <div class="col-4">
+                            <label class="small fw-bold">Stock Quantity</label>
+                            <input type="number" id="p-stock" class="form-control" placeholder="5" value="5">
+                        </div>
 
-.star-rating span:hover {
-  transform: scale(1.35);
-}
+                        <div class="col-12">
+                            <label class="small fw-bold">Additional Image URLs (Comma separated)</label>
+                            <input type="text" id="p-images" class="form-control" placeholder="https://img2.jpg, https://img3.jpg">
+                        </div>
 
-/* Leaflet Map Styling */
-#delivery-map {
-  border: 2px solid rgba(0, 0, 0, 0.1);
-}
+                        <div class="col-12">
+                            <label class="small fw-bold">Details & Specs</label>
+                            <textarea id="p-desc" class="form-control" rows="3" placeholder="e.g. Type-C Cable, 1M length, fast charging."></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="small fw-bold">Main Product Image</label>
+                            <div id="drop-zone">
+                                <p id="upload-status" class="mb-0 text-muted small">
+                                    <i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i> Drag & Drop Image or Click to Select
+                                </p>
+                                <img id="preview-img" src="">
+                                <input type="file" id="p-file" hidden accept="image/*">
+                                <input type="hidden" id="p-img-data">
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <button class="btn btn-luxury w-100 py-3 mt-3" onclick="saveProduct()">SAVE TO SHOP</button>
+                        </div>
+                    </div>
+
+                    <hr class="my-5">
+                    <h5 class="fw-bold mb-3">Inventory</h5>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <tbody id="inventory-list"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="section-card">
+                    <h4 class="fw-bold mb-4 d-flex align-items-center gap-2">Live Orders <i class="bi bi-inbox-fill"></i></h4>
+                    <div id="order-container" class="row"></div>
+                </div>
+
+                <div class="section-card mt-4">
+                    <h4 class="fw-bold mb-4 d-flex align-items-center gap-2">Restock Alerts <i class="bi bi-bell-fill"></i></h4>
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr class="small text-muted">
+                                    <th>PRODUCT ID</th>
+                                    <th>EMAIL</th>
+                                    <th>DATE</th>
+                                    <th>ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody id="restock-container"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db, ref, push, set, onValue, remove } from './firebase-config.js';
+
+        const fileInput = document.getElementById('p-file');
+        const dropZone = document.getElementById('drop-zone');
+        const imgPreview = document.getElementById('preview-img');
+        const statusText = document.getElementById('upload-status');
+        const hiddenImgInput = document.getElementById('p-img-data');
+
+        dropZone.onclick = () => fileInput.click();
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+        dropZone.ondrop = (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            handleFile(e.dataTransfer.files[0]);
+        };
+
+        fileInput.onchange = (e) => handleFile(e.target.files[0]);
+
+        function handleFile(file) {
+            if (!file) return;
+            if (file.size > 1000000) return alert("Image too large! Use photo under 1MB.");
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64String = e.target.result;
+                hiddenImgInput.value = base64String;
+                imgPreview.src = base64String;
+                imgPreview.style.display = "block";
+                statusText.innerHTML = '<i class="bi bi-check-circle-fill text-success fs-5"></i> Image Ready';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        window.saveProduct = async () => {
+            const id = document.getElementById('editing-id').value;
+            const name = document.getElementById('p-name').value;
+            const category = document.getElementById('p-category').value || "Other";
+            const color = document.getElementById('p-color').value || "";
+            const phoneType = document.getElementById('p-phonetype').value || "";
+            const price = document.getElementById('p-price').value;
+            const discount = document.getElementById('p-discount').value;
+            const stock = document.getElementById('p-stock').value || 5;
+            const imagesRaw = document.getElementById('p-images').value;
+            const description = document.getElementById('p-desc').value;
+            const imgData = hiddenImgInput.value;
+
+            if (!name || !price || !imgData) return alert("Fill Name, Price and Image!");
+
+            const additionalImages = imagesRaw ? imagesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+            const data = {
+                name,
+                category,
+                color,
+                phoneType,
+                price: Number(price),
+                discountPrice: discount ? Number(discount) : null,
+                stock: Number(stock),
+                images: additionalImages,
+                description: description || "",
+                img: imgData
+            };
+
+            if (id) {
+                await set(ref(db, 'products/' + id), data);
+                document.getElementById('editing-id').value = "";
+            } else {
+                await push(ref(db, 'products'), data);
+            }
+
+            document.querySelectorAll('input, textarea').forEach(i => i.value = "");
+            imgPreview.style.display = "none";
+            statusText.innerHTML = '<i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i> Drag & Drop Image or Click to Select';
+            alert("Product Saved!");
+        };
+
+        onValue(ref(db, 'products'), (snap) => {
+            const data = snap.val();
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = "";
+            for (let id in data) {
+                const p = data[id];
+                list.innerHTML += `
+                    <tr>
+                        <td><img src="${p.img}"></td>
+                        <td>
+                            <div class="small fw-bold">${p.name}</div>
+                            <span class="badge bg-secondary">${p.category || 'Other'}</span>
+                            <span class="badge ${p.stock > 0 ? 'bg-success' : 'bg-danger'}">Stock: ${p.stock ?? 0}</span>
+                        </td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-dark me-1" onclick="editProduct('${id}')"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteProduct('${id}')"><i class="bi bi-trash"></i></button>
+                        </td>
+                    </tr>`;
+            }
+        });
+
+        window.editProduct = (id) => {
+            onValue(ref(db, 'products/' + id), (snap) => {
+                const p = snap.val();
+                if (!p) return;
+                document.getElementById('editing-id').value = id;
+                document.getElementById('p-name').value = p.name || "";
+                document.getElementById('p-category').value = p.category || "";
+                document.getElementById('p-color').value = p.color || "";
+                document.getElementById('p-phonetype').value = p.phoneType || "";
+                document.getElementById('p-price').value = p.price || "";
+                document.getElementById('p-discount').value = p.discountPrice || "";
+                document.getElementById('p-stock').value = p.stock ?? 5;
+                document.getElementById('p-images').value = p.images ? p.images.join(', ') : "";
+                document.getElementById('p-desc').value = p.description || "";
+                hiddenImgInput.value = p.img || "";
+                imgPreview.src = p.img || "";
+                imgPreview.style.display = p.img ? "block" : "none";
+                window.scrollTo(0, 0);
+            }, { onlyOnce: true });
+        };
+
+        window.deleteProduct = (id) => { if (confirm("Delete product?")) remove(ref(db, 'products/' + id)); };
+
+        // Orders List
+        onValue(ref(db, 'orders'), (snap) => {
+            const container = document.getElementById('order-container');
+            container.innerHTML = "";
+            const data = snap.val();
+            if (!data) return container.innerHTML = "<p class='text-muted text-center py-4 mb-0'>Waiting for orders...</p>";
+
+            Object.keys(data).reverse().forEach(id => {
+                const o = data[id];
+                const mapUrl = o.coords ? `https://www.google.com/maps?q=${o.coords.lat},${o.coords.lng}` : "#";
+                container.innerHTML += `
+                    <div class="col-12 mb-3">
+                        <div class="card order-card p-3 bg-white">
+                            <div class="d-flex justify-content-between">
+                                <h6 class="fw-bold mb-0">${o.custName}</h6>
+                                <span class="fw-bold text-success">${o.total} EGP</span>
+                            </div>
+                            <small class="text-muted d-block mb-1">${o.custLocation || "Alexandria"}</small>
+                            <p class="small mb-2"><strong>Items:</strong> ${o.items}</p>
+                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                <div class="d-flex gap-1">
+                                    <a href="tel:${o.custPhone}" class="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-1"><i class="bi bi-telephone-fill"></i> Call ${o.custPhone}</a>
+                                    ${o.coords ? `<a href="${mapUrl}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"><i class="bi bi-geo-alt-fill text-danger"></i> Map Location</a>` : ''}
+                                </div>
+                                <button class="btn btn-sm btn-dark rounded-pill" onclick="clearOrder('${id}')">Done</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+        });
+
+        window.clearOrder = (id) => { if (confirm("Clear order?")) remove(ref(db, 'orders/' + id)); };
+
+        // Restock Alerts List
+        onValue(ref(db, 'restock_requests'), (snap) => {
+            const container = document.getElementById('restock-container');
+            container.innerHTML = "";
+            const data = snap.val();
+            if (!data) return container.innerHTML = "<tr><td colspan='4' class='text-muted text-center py-3'>No restock requests.</td></tr>";
+
+            Object.keys(data).reverse().forEach(id => {
+                const r = data[id];
+                container.innerHTML += `
+                    <tr>
+                        <td class="small fw-bold">${r.productId}</td>
+                        <td class="small">${r.email}</td>
+                        <td class="small text-muted">${new Date(r.date).toLocaleDateString()}</td>
+                        <td><button class="btn btn-sm btn-outline-danger rounded-pill" onclick="removeRestock('${id}')">Remove</button></td>
+                    </tr>`;
+            });
+        });
+
+        window.removeRestock = (id) => { remove(ref(db, 'restock_requests/' + id)); };
+    </script>
+</body>
+
+</html>
