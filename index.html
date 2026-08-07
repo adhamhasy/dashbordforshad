@@ -1,318 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap");
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title kareem, Dashboard | Manager> </title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+:root {
+  --cream-bg: #faf9f6;
+  --dark: #2d2926;
+  --gold: #d4af37;
+  --white: #ffffff;
+}
 
-        body {
-            background: #f4f7f6;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            padding: 20px;
-        }
+[data-bs-theme="dark"] {
+  --cream-bg: #121212;
+  --dark: #f8f9fa;
+  --gold: #d4af37;
+}
 
-        .section-card {
-            background: white;
-            border-radius: 25px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            border: none;
-            margin-bottom: 30px;
-        }
+body {
+  background-color: var(--cream-bg);
+  font-family: "Plus Jakarta Sans", sans-serif;
+}
 
-        .btn-luxury {
-            background: #2D2926;
-            color: white;
-            border-radius: 50px;
-            font-weight: 600;
-        }
+.cursor-pointer {
+  cursor: pointer;
+}
 
-        .btn-luxury:hover {
-            background: #D4AF37;
-            color: white;
-        }
+/* Skeleton Loading Animation (#18) */
+.skeleton-card-item {
+  animation: pulse 1.5s infinite ease-in-out;
+}
 
-        #drop-zone {
-            border: 2px dashed #ccc;
-            border-radius: 20px;
-            padding: 40px;
-            text-align: center;
-            background: #fafafa;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+.skeleton-img {
+  width: 100%;
+  aspect-ratio: 1/1;
+  background-color: #e0e0e0;
+  border-radius: 20px;
+}
 
-        #drop-zone.dragover {
-            background: #e9ecef;
-            border-color: #D4AF37;
-        }
+.skeleton-text {
+  height: 14px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  width: 80%;
+}
 
-        #preview-img {
-            width: 100px;
-            height: 100px;
-            object-fit: cover;
-            border-radius: 15px;
-            display: none;
-            margin: 10px auto;
-        }
+.skeleton-text.short {
+  width: 40%;
+}
 
-        .order-card {
-            border-radius: 20px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            transition: 0.3s;
-        }
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
 
-        .table img {
-            width: 50px;
-            height: 50px;
-            object-fit: cover;
-            border-radius: 10px;
-        }
-    </style>
-</head>
+/* Rounded Product Cards */
+.card {
+  border: none;
+  border-radius: 20px !important;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+}
 
-<body>
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06);
+}
 
-    <div class="container-fluid">
-        <h2 class="fw-bold mb-5">kareem Manager Dashboard</h2>
+.btn-luxury {
+  background-color: var(--dark);
+  color: var(--white);
+  border: none;
+  font-weight: 700;
+  transition: 0.3s;
+}
 
-        <div class="row">
-            <div class="col-lg-5">
-                <div class="section-card">
-                    <h4 class="fw-bold mb-4">Product Management</h4>
-                    <div class="row g-3">
-                        <input type="hidden" id="editing-id">
+.btn-luxury:hover {
+  background-color: var(--gold);
+  color: white;
+}
 
-                        <div class="col-12">
-                            <label class="small fw-bold">Product Name</label>
-                            <input type="text" id="p-name" class="form-control" placeholder="product name">
-                        </div>
+/* Sort Modal Option Buttons */
+.btn-sort-option {
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
 
-                        <!-- Category Selection -->
-                        <div class="col-12">
-                            <label class="small fw-bold">Category</label>
-                            <input type="text" id="p-category" class="form-control" list="category-options" placeholder="Cable, Phone Case, Charger, etc.">
-                            <datalist id="category-options">
-                                <option value="Cable">
-                                <option value="Phone Case">
-                                <option value="Charger">
-                                <option value="Audio">
-                                <option value="Accessories">
-                            </datalist>
-                        </div>
+.btn-sort-option.active {
+  background-color: var(--bs-primary);
+  color: white;
+}
 
-                        <!-- Color Sub-Filter -->
-                        <div class="col-6">
-                            <label class="small fw-bold">Color(s)</label>
-                            <input type="text" id="p-color" class="form-control" placeholder="Black, White, Gold">
-                        </div>
+/* Toast Alerts */
+.luxury-toast {
+  position: fixed;
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--dark);
+  color: white;
+  padding: 15px 40px;
+  border-radius: 50px;
+  transition: 0.5s;
+  z-index: 9999;
+}
 
-                        <!-- Phone Type / Model Sub-Filter -->
-                        <div class="col-6">
-                            <label class="small fw-bold">Phone Type / Model</label>
-                            <input type="text" id="p-phonetype" class="form-control" placeholder="iPhone 15, Samsung S24">
-                        </div>
+.show-toast {
+  bottom: 30px !important;
+}
 
-                        <div class="col-6">
-                            <label class="small fw-bold">Original Price (EGP)</label>
-                            <input type="number" id="p-price" class="form-control" placeholder="1500">
-                        </div>
+.success-toast {
+  position: fixed;
+  bottom: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2d3436;
+  color: #f1f2f6;
+  padding: 16px 40px;
+  border-radius: 50px;
+  transition: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  z-index: 10000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
 
-                        <div class="col-6">
-                            <label class="small fw-bold">Sale Price (Optional)</label>
-                            <input type="number" id="p-discount" class="form-control" placeholder="1200">
-                        </div>
+.show-success {
+  bottom: 40px !important;
+}
 
-                        <!-- Description & Specs -->
-                        <div class="col-12">
-                            <label class="small fw-bold">Details & Specs (Type, length, material, etc.)</label>
-                            <textarea id="p-desc" class="form-control" rows="3" placeholder="e.g. Type-C to Lightning Cable, Braided nylon, 1 Meter length, supports fast charging."></textarea>
-                        </div>
+.star-rating span {
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
 
-                        <div class="col-12">
-                            <label class="small fw-bold">Product Image</label>
-                            <div id="drop-zone">
-                                <p id="upload-status" class="mb-0 text-muted">Drag & Drop Image or Click to Select</p>
-                                <img id="preview-img" src="">
-                                <input type="file" id="p-file" hidden accept="image/*">
-                                <input type="hidden" id="p-img-data">
-                            </div>
-                        </div>
+.star-rating span:hover {
+  transform: scale(1.35);
+}
 
-                        <div class="col-12">
-                            <button class="btn btn-luxury w-100 py-3 mt-3" onclick="saveProduct()">SAVE TO SHOP</button>
-                        </div>
-                    </div>
-
-                    <hr class="my-5">
-                    <h5 class="fw-bold mb-3">Inventory</h5>
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <tbody id="inventory-list"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-7">
-                <div class="section-card">
-                    <h4 class="fw-bold mb-4">Live Orders 📥</h4>
-                    <div id="order-container" class="row"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { db, ref, push, set, onValue, remove } from './firebase-config.js';
-
-        const fileInput = document.getElementById('p-file');
-        const dropZone = document.getElementById('drop-zone');
-        const imgPreview = document.getElementById('preview-img');
-        const statusText = document.getElementById('upload-status');
-        const hiddenImgInput = document.getElementById('p-img-data');
-
-        // --- IMAGE HANDLING ---
-        dropZone.onclick = () => fileInput.click();
-
-        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
-        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
-        dropZone.ondrop = (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            handleFile(e.dataTransfer.files[0]);
-        };
-
-        fileInput.onchange = (e) => handleFile(e.target.files[0]);
-
-        function handleFile(file) {
-            if (!file) return;
-            if (file.size > 1000000) return alert("Image too large! Please use a smaller photo (under 1MB).");
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64String = e.target.result;
-                hiddenImgInput.value = base64String;
-                imgPreview.src = base64String;
-                imgPreview.style.display = "block";
-                statusText.innerText = "✅ Image Ready";
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // --- PRODUCT LOGIC ---
-        window.saveProduct = async () => {
-            const id = document.getElementById('editing-id').value;
-            const name = document.getElementById('p-name').value;
-            const category = document.getElementById('p-category').value || "Other";
-            const color = document.getElementById('p-color').value || "";
-            const phoneType = document.getElementById('p-phonetype').value || "";
-            const price = document.getElementById('p-price').value;
-            const discount = document.getElementById('p-discount').value;
-            const description = document.getElementById('p-desc').value;
-            const imgData = hiddenImgInput.value;
-
-            if (!name || !price || !imgData) return alert("Fill Name, Price and Image!");
-
-            const data = {
-                name,
-                category,
-                color,
-                phoneType,
-                price,
-                discountPrice: discount || null,
-                description: description || "",
-                img: imgData
-            };
-
-            if (id) {
-                await set(ref(db, 'products/' + id), data);
-                document.getElementById('editing-id').value = "";
-            } else {
-                await push(ref(db, 'products'), data);
-            }
-
-            // Clear Form
-            document.querySelectorAll('input, textarea').forEach(i => i.value = "");
-            imgPreview.style.display = "none";
-            statusText.innerText = "Drag & Drop Image or Click to Select";
-            alert("Product Saved!");
-        };
-
-        onValue(ref(db, 'products'), (snap) => {
-            const data = snap.val();
-            const list = document.getElementById('inventory-list');
-            list.innerHTML = "";
-            for (let id in data) {
-                const p = data[id];
-                list.innerHTML += `
-                    <tr>
-                        <td><img src="${p.img}"></td>
-                        <td>
-                            <div class="small fw-bold">${p.name}</div>
-                            <span class="badge bg-secondary">${p.category || 'Other'}</span>
-                            ${p.color ? `<span class="badge bg-dark">${p.color}</span>` : ""}
-                            ${p.phoneType ? `<span class="badge bg-info text-dark">${p.phoneType}</span>` : ""}
-                        </td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-outline-dark me-1" onclick="editProduct('${id}', '${p.name.replace(/'/g, "")}', '${p.category || ""}', '${p.color || ""}', '${p.phoneType || ""}', '${p.price}', '${p.discountPrice || ""}', '${(p.description || "").replace(/'/g, "")}', '${p.img}')">Edit</button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteProduct('${id}')">×</button>
-                        </td>
-                    </tr>`;
-            }
-        });
-
-        window.editProduct = (id, name, category, color, phoneType, price, discount, description, img) => {
-            document.getElementById('editing-id').value = id;
-            document.getElementById('p-name').value = name;
-            document.getElementById('p-category').value = category;
-            document.getElementById('p-color').value = color;
-            document.getElementById('p-phonetype').value = phoneType;
-            document.getElementById('p-price').value = price;
-            document.getElementById('p-discount').value = discount;
-            document.getElementById('p-desc').value = description;
-            hiddenImgInput.value = img;
-            imgPreview.src = img;
-            imgPreview.style.display = "block";
-            window.scrollTo(0, 0);
-        };
-
-        window.deleteProduct = (id) => { if (confirm("Delete?")) remove(ref(db, 'products/' + id)); };
-
-        // --- ORDERS LOGIC ---
-        onValue(ref(db, 'orders'), (snap) => {
-            const container = document.getElementById('order-container');
-            container.innerHTML = "";
-            const data = snap.val();
-            if (!data) return container.innerHTML = "<p class='text-muted text-center py-5'>Waiting for orders...</p>";
-
-            Object.keys(data).reverse().forEach(id => {
-                const o = data[id];
-                container.innerHTML += `
-                    <div class="col-12 mb-3">
-                        <div class="card order-card p-3 bg-white">
-                            <div class="d-flex justify-content-between">
-                                <h6 class="fw-bold mb-0">${o.custName}</h6>
-                                <span class="fw-bold text-success">${o.total} EGP</span>
-                            </div>
-                            <small class="text-muted d-block mb-2">${o.custArea}</small>
-                            <p class="small mb-2"><strong>Items:</strong> ${o.items}</p>
-                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                <a href="tel:${o.custPhone}" class="btn btn-sm btn-outline-primary rounded-pill">Call ${o.custPhone}</a>
-                                <button class="btn btn-sm btn-dark rounded-pill" onclick="clearOrder('${id}')">Done</button>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-        });
-
-        window.clearOrder = (id) => { if (confirm("Clear order?")) remove(ref(db, 'orders/' + id)); };
-    </script>
-</body>
-
-</html>
+/* Leaflet Map Styling */
+#delivery-map {
+  border: 2px solid rgba(0, 0, 0, 0.1);
+}
