@@ -678,7 +678,6 @@ window.confirmOrder = async () => {
     alert("Error sending order. Please try again!");
   }
 };
-
 // ==========================================================
 // ADDED: Automatic Image Compression Helper (< 1 MB limit)
 // ==========================================================
@@ -691,16 +690,23 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!file) return;
 
     try {
+      // 1. Compress the image well below 1 MB
       const compressedFile = await compressImageByQuality(file, 1);
       
-      // Update DOM preview if an element with id="imagePreview" exists
+      // 2. CRITICAL FIX: Overwrite the input's actual .files array using DataTransfer
+      // Without this, your form/upload script still sees the original multi-megabyte camera file!
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(compressedFile);
+      imageInput.files = dataTransfer.files;
+
+      // 3. Update DOM preview if an element with id="imagePreview" exists
       const previewEl = document.getElementById("imagePreview");
       if (previewEl) {
         previewEl.src = URL.createObjectURL(compressedFile);
         previewEl.style.display = "block";
       }
 
-      // Dispatch a custom event so upload/form handlers can access the compressed File
+      // 4. Dispatch custom event if any other script needs to listen for it
       document.dispatchEvent(new CustomEvent("imageCompressed", {
         detail: { file: compressedFile }
       }));
@@ -712,7 +718,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 /**
  * Compresses an image below the target size (default 1 MB).
- * Primarily reduces JPEG quality; scales down resolution only as a fallback.
+ * Caps high-res camera photos at 2048px max dimension first, then optimizes JPEG quality.
  */
 async function compressImageByQuality(file, maxSizeMB = 1) {
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
@@ -731,6 +737,20 @@ async function compressImageByQuality(file, maxSizeMB = 1) {
   let width = image.width;
   let height = image.height;
 
+  // CRITICAL FIX for camera photos:
+  // Phone cameras shoot at 4000px-8000px+. We cap the initial dimension at 2048px
+  // so the browser canvas doesn't choke and the file size drops immediately.
+  const MAX_DIMENSION = 2048;
+  if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+    if (width > height) {
+      height = Math.round((height * MAX_DIMENSION) / width);
+      width = MAX_DIMENSION;
+    } else {
+      width = Math.round((width * MAX_DIMENSION) / height);
+      height = MAX_DIMENSION;
+    }
+  }
+
   canvas.width = width;
   canvas.height = height;
   ctx.drawImage(image, 0, 0, width, height);
@@ -738,20 +758,20 @@ async function compressImageByQuality(file, maxSizeMB = 1) {
   let quality = 0.90;
   let blob = null;
 
-  // Decrease quality progressively without altering image resolution
-  while (quality >= 0.08) {
+  // Decrease quality progressively
+  while (quality >= 0.10) {
     blob = await new Promise((resolve) => {
       canvas.toBlob((b) => resolve(b), "image/jpeg", quality);
     });
 
     if (blob && blob.size <= maxSizeBytes) break;
-    quality -= 0.08;
+    quality -= 0.10;
   }
 
-  // Fallback: Scale down resolution slightly if lowest quality is still > 1 MB
+  // Fallback: Scale down resolution further if still > 1 MB
   while (blob && blob.size > maxSizeBytes) {
-    width = Math.floor(width * 0.85);
-    height = Math.floor(height * 0.85);
+    width = Math.floor(width * 0.80);
+    height = Math.floor(height * 0.80);
 
     canvas.width = width;
     canvas.height = height;
@@ -760,7 +780,7 @@ async function compressImageByQuality(file, maxSizeMB = 1) {
     ctx.drawImage(image, 0, 0, width, height);
 
     blob = await new Promise((resolve) => {
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.40);
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.50);
     });
   }
 
