@@ -678,3 +678,97 @@ window.confirmOrder = async () => {
     alert("Error sending order. Please try again!");
   }
 };
+
+// ==========================================================
+// ADDED: Automatic Image Compression Helper (< 1 MB limit)
+// ==========================================================
+document.addEventListener("DOMContentLoaded", () => {
+  const imageInput = document.getElementById("imageInput");
+  if (!imageInput) return;
+
+  imageInput.addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const compressedFile = await compressImageByQuality(file, 1);
+      
+      // Update DOM preview if an element with id="imagePreview" exists
+      const previewEl = document.getElementById("imagePreview");
+      if (previewEl) {
+        previewEl.src = URL.createObjectURL(compressedFile);
+        previewEl.style.display = "block";
+      }
+
+      // Dispatch a custom event so upload/form handlers can access the compressed File
+      document.dispatchEvent(new CustomEvent("imageCompressed", {
+        detail: { file: compressedFile }
+      }));
+    } catch (err) {
+      console.error("Image compression error:", err);
+    }
+  });
+});
+
+/**
+ * Compresses an image below the target size (default 1 MB).
+ * Primarily reduces JPEG quality; scales down resolution only as a fallback.
+ */
+async function compressImageByQuality(file, maxSizeMB = 1) {
+  const maxSizeBytes = maxSizeMB * 1024 * 1024;
+  if (file.size <= maxSizeBytes) return file;
+
+  const image = await new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = (err) => reject(err);
+    img.src = URL.createObjectURL(file);
+  });
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  let width = image.width;
+  let height = image.height;
+
+  canvas.width = width;
+  canvas.height = height;
+  ctx.drawImage(image, 0, 0, width, height);
+
+  let quality = 0.90;
+  let blob = null;
+
+  // Decrease quality progressively without altering image resolution
+  while (quality >= 0.08) {
+    blob = await new Promise((resolve) => {
+      canvas.toBlob((b) => resolve(b), "image/jpeg", quality);
+    });
+
+    if (blob && blob.size <= maxSizeBytes) break;
+    quality -= 0.08;
+  }
+
+  // Fallback: Scale down resolution slightly if lowest quality is still > 1 MB
+  while (blob && blob.size > maxSizeBytes) {
+    width = Math.floor(width * 0.85);
+    height = Math.floor(height * 0.85);
+
+    canvas.width = width;
+    canvas.height = height;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(image, 0, 0, width, height);
+
+    blob = await new Promise((resolve) => {
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.40);
+    });
+  }
+
+  URL.revokeObjectURL(image.src);
+
+  const originalName = file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
+  return new File([blob], `${originalName}.jpg`, {
+    type: "image/jpeg",
+    lastModified: Date.now()
+  });
+}
