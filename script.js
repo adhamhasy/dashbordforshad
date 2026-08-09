@@ -4,8 +4,18 @@ let cart = JSON.parse(localStorage.getItem("cart") || "{}");
 let wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
 let recentlyViewed = JSON.parse(localStorage.getItem("recently_viewed") || "[]");
 
-// 1. Load products instantly from device storage (LocalStorage) if available
-let allProducts = JSON.parse(localStorage.getItem("cached_products") || "[]");
+// Safe LocalStorage load with crash protection
+let allProducts = [];
+try {
+  const cached = localStorage.getItem("cached_products");
+  if (cached) {
+    allProducts = JSON.parse(cached);
+  }
+} catch (e) {
+  console.warn("Cache corrupted or quota exceeded, clearing cache:", e);
+  localStorage.removeItem("cached_products");
+  allProducts = [];
+}
 
 let selectedCategory = "All";
 let currentSortOption = "default";
@@ -32,19 +42,19 @@ window.toggleDarkMode = () => {
 const savedTheme = localStorage.getItem("theme") || "light";
 document.documentElement.setAttribute("data-bs-theme", savedTheme);
 
-// If cached products exist, render them instantly on startup!
+// Render cached products instantly on startup
 document.addEventListener("DOMContentLoaded", () => {
   if (allProducts.length > 0) {
     refreshUIGradual();
   }
 });
 
-// Helper function to save products to device storage
+// Safe save to device storage with quota check
 function saveProductsToCache() {
   try {
     localStorage.setItem("cached_products", JSON.stringify(allProducts));
   } catch (e) {
-    console.warn("Storage quota limit reached:", e);
+    console.warn("LocalStorage 5MB quota reached. Skipping local caching for new items:", e);
   }
 }
 
@@ -790,11 +800,9 @@ document.addEventListener("DOMContentLoaded", () => {
     event.preventDefault();
 
     try {
-      // 1. Compress image to 0.7 MB so Base64 representation stays strictly under Firebase's 1MB limit
       const compressedFile = await compressImageByQuality(file, 0.7);
       compressedFile._isCompressed = true;
 
-      // 2. Convert File into Base64 Text String
       const base64String = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
@@ -804,19 +812,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       window.currentProductImageText = base64String;
 
-      // 3. Overwrite input files array using DataTransfer
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(compressedFile);
       imageInput.files = dataTransfer.files;
 
-      // 4. Render preview image using the Base64 text string
       const previewEl = document.getElementById("imagePreview");
       if (previewEl) {
         previewEl.src = base64String;
         previewEl.style.display = "block";
       }
 
-      // 5. Manually trigger validation check after compression finishes
       const newEvent = new Event("change", { bubbles: true });
       imageInput.dispatchEvent(newEvent);
 
