@@ -1,22 +1,9 @@
-import { db, ref, onChildAdded, onChildChanged, onChildRemoved, push, set } from "./firebase-config.js";
+import { db, ref, onValue, push, set } from "./firebase-config.js";
 
 let cart = JSON.parse(localStorage.getItem("cart") || "{}");
 let wishlist = JSON.parse(localStorage.getItem("wishlist") || "[]");
 let recentlyViewed = JSON.parse(localStorage.getItem("recently_viewed") || "[]");
-
-// Safe LocalStorage load with crash protection
 let allProducts = [];
-try {
-  const cached = localStorage.getItem("cached_products");
-  if (cached) {
-    allProducts = JSON.parse(cached);
-  }
-} catch (e) {
-  console.warn("Cache corrupted or quota exceeded, clearing cache:", e);
-  localStorage.removeItem("cached_products");
-  allProducts = [];
-}
-
 let selectedCategory = "All";
 let currentSortOption = "default";
 let currentSortLabel = "Default";
@@ -42,63 +29,29 @@ window.toggleDarkMode = () => {
 const savedTheme = localStorage.getItem("theme") || "light";
 document.documentElement.setAttribute("data-bs-theme", savedTheme);
 
-// Render cached products instantly on startup
-document.addEventListener("DOMContentLoaded", () => {
-  if (allProducts.length > 0) {
-    refreshUIGradual();
-  }
-});
-
-// Safe save to device storage with quota check
-function saveProductsToCache() {
-  try {
-    localStorage.setItem("cached_products", JSON.stringify(allProducts));
-  } catch (e) {
-    console.warn("LocalStorage 5MB quota reached. Skipping local caching for new items:", e);
-  }
-}
-
-// Progressive Firebase Streaming & Price/Data Sync
-const productsRef = ref(db, "products");
-
-onChildAdded(productsRef, (snapshot) => {
-  const id = snapshot.key;
+// Fetch Products
+onValue(ref(db, "products"), (snapshot) => {
   const data = snapshot.val();
-  const existingIndex = allProducts.findIndex((p) => p.id === id);
-  
-  if (existingIndex === -1) {
-    allProducts.push({ id, stock: data.stock ?? 5, ...data });
-    saveProductsToCache();
-    refreshUIGradual();
+  allProducts = [];
+
+  if (!data) {
+    document.getElementById("product-list").innerHTML = `
+      <div class="col-12 text-center mt-5">
+          <p class="text-muted">No products found. Add some from the dashboard!</p>
+      </div>`;
+    return;
   }
-});
 
-// Automatically updates prices, stock, or details if changed in Firebase
-onChildChanged(productsRef, (snapshot) => {
-  const id = snapshot.key;
-  const data = snapshot.val();
-  const index = allProducts.findIndex((p) => p.id === id);
-  if (index !== -1) {
-    allProducts[index] = { id, stock: data.stock ?? 5, ...data };
-    saveProductsToCache();
-    refreshUIGradual();
+  for (let id in data) {
+    allProducts.push({ id, stock: data[id].stock ?? 5, ...data[id] });
   }
-});
 
-onChildRemoved(productsRef, (snapshot) => {
-  const id = snapshot.key;
-  allProducts = allProducts.filter((p) => p.id !== id);
-  saveProductsToCache();
-  refreshUIGradual();
-});
-
-function refreshUIGradual() {
   renderCategoryButtons();
   renderSubFilters();
   filterAndSortProducts();
   renderRecentlyViewed();
   updateUI();
-}
+});
 
 function getAverageRating(reviewsObj) {
   if (!reviewsObj) return { avg: 0, count: 0 };
@@ -171,7 +124,6 @@ document.addEventListener("DOMContentLoaded", () => {
 // Category & Sub-Filters
 function renderCategoryButtons() {
   const container = document.getElementById("modal-category-filters");
-  if (!container) return;
   const categories = ["All", ...new Set(allProducts.map((p) => p.category || "Other"))];
 
   container.innerHTML = categories
@@ -187,7 +139,7 @@ window.selectCategory = (category, btnEl) => {
   document.querySelectorAll("#modal-category-filters button").forEach((b) => {
     b.className = "btn btn-outline-dark rounded-pill px-3 btn-sm";
   });
-  if (btnEl) btnEl.className = "btn btn-dark active-category rounded-pill px-3 btn-sm";
+  btnEl.className = "btn btn-dark active-category rounded-pill px-3 btn-sm";
   
   renderSubFilters();
   filterAndSortProducts();
@@ -196,7 +148,6 @@ window.selectCategory = (category, btnEl) => {
 function renderSubFilters() {
   const colorSelect = document.getElementById("colorFilter");
   const phoneTypeSelect = document.getElementById("phoneTypeFilter");
-  if (!colorSelect || !phoneTypeSelect) return;
 
   const categoryProducts = selectedCategory === "All"
     ? allProducts
@@ -222,10 +173,7 @@ function renderSubFilters() {
 
 window.updatePriceSliderDisplay = () => {
   const slider = document.getElementById("maxPriceSlider");
-  const display = document.getElementById("priceRangeDisplay");
-  if (slider && display) {
-    display.innerText = `0 - ${Number(slider.value).toLocaleString()} EGP`;
-  }
+  document.getElementById("priceRangeDisplay").innerText = `0 - ${Number(slider.value).toLocaleString()} EGP`;
 };
 
 // Sort & Reset Filters
@@ -234,45 +182,37 @@ window.selectSortOption = (value, label, btnEl) => {
   currentSortLabel = label;
 
   document.querySelectorAll(".btn-sort-option").forEach((b) => b.classList.remove("active"));
-  if (btnEl) btnEl.classList.add("active");
+  btnEl.classList.add("active");
 
-  const sortModalEl = document.getElementById("sortModal");
-  if (sortModalEl) {
-    const sortModal = bootstrap.Modal.getInstance(sortModalEl);
-    if (sortModal) sortModal.hide();
-  }
+  const sortModal = bootstrap.Modal.getInstance(document.getElementById("sortModal"));
+  if (sortModal) sortModal.hide();
 
   filterAndSortProducts();
 };
 
 window.resetFilters = () => {
   selectedCategory = "All";
-  const maxPriceSlider = document.getElementById("maxPriceSlider");
-  if (maxPriceSlider) maxPriceSlider.value = 50000;
-  window.updatePriceSliderDisplay();
-  const colorFilter = document.getElementById("colorFilter");
-  const phoneTypeFilter = document.getElementById("phoneTypeFilter");
-  const searchInput = document.getElementById("searchInput");
-  if (colorFilter) colorFilter.value = "All";
-  if (phoneTypeFilter) phoneTypeFilter.value = "All";
-  if (searchInput) searchInput.value = "";
+  document.getElementById("maxPriceSlider").value = 50000;
+  updatePriceSliderDisplay();
+  document.getElementById("colorFilter").value = "All";
+  document.getElementById("phoneTypeFilter").value = "All";
+  document.getElementById("searchInput").value = "";
   
   renderCategoryButtons();
   renderSubFilters();
   filterAndSortProducts();
 };
 
-// Render Products Grid with Progressive Staggered Animation
+// Render Products Grid
 window.renderProducts = (items) => {
   const list = document.getElementById("product-list");
-  if (!list) return;
   if (items.length === 0) {
     list.innerHTML = `<div class="col-12 text-center my-5"><p class="text-muted">No products match your filter criteria.</p></div>`;
     return;
   }
 
   list.innerHTML = items
-    .map((p, index) => {
+    .map((p) => {
       const hasDiscount = p.discountPrice && Number(p.discountPrice) < Number(p.price);
       const displayPrice = hasDiscount ? p.discountPrice : p.price;
       const { avg } = getAverageRating(p.reviews);
@@ -287,10 +227,8 @@ window.renderProducts = (items) => {
         stockBadgeHTML = `<span class="badge bg-warning text-dark position-absolute top-0 end-0 m-2">Only ${p.stock} Left!</span>`;
       }
 
-      const delay = Math.min(index * 0.05, 0.6);
-
       return `
-        <div class="col-6 col-md-3 mb-4 product-card-animate" style="animation-delay: ${delay}s;">
+        <div class="col-6 col-md-3 mb-4">
             <div class="card border-0 bg-body-tertiary product-card h-100 d-flex flex-column position-relative" style="cursor: pointer;">
                 
                 <button class="btn btn-sm rounded-circle position-absolute top-0 start-0 m-2 z-3 d-flex align-items-center justify-content-center ${isWishlisted ? 'bg-danger text-white' : 'bg-white text-dark shadow-sm'}" 
@@ -355,19 +293,15 @@ window.filterAndSortProducts = () => {
   if (selectedPhoneType !== "All") activeFilterCount++;
 
   const filterBadge = document.getElementById("filter-badge");
-  if (filterBadge) {
-    if (activeFilterCount > 0) {
-      filterBadge.innerText = activeFilterCount;
-      filterBadge.style.display = "inline-block";
-    } else {
-      filterBadge.style.display = "none";
-    }
+  if (activeFilterCount > 0) {
+    filterBadge.innerText = activeFilterCount;
+    filterBadge.style.display = "inline-block";
+  } else {
+    filterBadge.style.display = "none";
   }
 
   const sortBadge = document.getElementById("sort-badge");
-  if (sortBadge) {
-    sortBadge.style.display = currentSortOption !== "default" ? "inline-block" : "none";
-  }
+  sortBadge.style.display = currentSortOption !== "default" ? "inline-block" : "none";
 
   let filtered = allProducts.filter((p) => {
     const effectivePrice = getEffectivePrice(p);
@@ -393,7 +327,6 @@ window.filterAndSortProducts = () => {
 
 function renderActiveFilterBadges(maxPrice, color, phoneType) {
   const container = document.getElementById("active-filter-tags");
-  if (!container) return;
   let html = "";
   if (selectedCategory !== "All") html += `<span class="badge bg-dark rounded-pill px-3 py-2 small">Cat: ${selectedCategory}</span>`;
   if (maxPrice < 50000) html += `<span class="badge bg-dark rounded-pill px-3 py-2 small">Max: ${maxPrice.toLocaleString()} EGP</span>`;
@@ -419,7 +352,6 @@ window.toggleWishlist = (productId, event) => {
 
 window.openWishlistModal = () => {
   const container = document.getElementById("wishlist-items-list");
-  if (!container) return;
   const wishlistedItems = allProducts.filter((p) => wishlist.includes(p.id));
 
   if (wishlistedItems.length === 0) {
@@ -441,8 +373,7 @@ window.openWishlistModal = () => {
       .join("");
   }
 
-  const modalEl = document.getElementById("wishlistModal");
-  if (modalEl) new bootstrap.Modal(modalEl).show();
+  new bootstrap.Modal(document.getElementById("wishlistModal")).show();
 };
 
 // Product Modal & Gallery
@@ -462,100 +393,80 @@ window.openProductModal = (id) => {
   const displayPrice = hasDiscount ? p.discountPrice : p.price;
   const { avg, count } = getAverageRating(p.reviews);
 
-  const modalImg = document.getElementById("modal-img");
-  if (modalImg) modalImg.src = p.img;
+  document.getElementById("modal-img").src = p.img;
 
   const thumbnailsContainer = document.getElementById("modal-thumbnails");
   const images = p.images ? [p.img, ...p.images] : [p.img];
-  if (thumbnailsContainer) {
-    if (images.length > 1) {
-      thumbnailsContainer.innerHTML = images
-        .map(
-          (imgSrc) => `
-          <img src="${imgSrc}" class="rounded-3 shadow-sm cursor-pointer border" style="width:50px; height:50px; object-fit:cover;" onclick="document.getElementById('modal-img').src='${imgSrc}'">
-        `
-        )
-        .join("");
-    } else {
-      thumbnailsContainer.innerHTML = "";
-    }
+  if (images.length > 1) {
+    thumbnailsContainer.innerHTML = images
+      .map(
+        (imgSrc) => `
+        <img src="${imgSrc}" class="rounded-3 shadow-sm cursor-pointer border" style="width:50px; height:50px; object-fit:cover;" onclick="document.getElementById('modal-img').src='${imgSrc}'">
+      `
+      )
+      .join("");
+  } else {
+    thumbnailsContainer.innerHTML = "";
   }
 
   const stockContainer = document.getElementById("modal-stock-status");
   const actionContainer = document.getElementById("modal-action-container");
   const isOutOfStock = Number(p.stock) === 0;
 
-  if (stockContainer && actionContainer) {
-    if (isOutOfStock) {
-      stockContainer.innerHTML = `<span class="badge bg-danger">Out of Stock</span>`;
-      actionContainer.innerHTML = `
-        <div class="bg-body-tertiary p-3 rounded-4 mb-4 text-start">
-          <h6 class="fw-bold small mb-1">Out of Stock! Get Notified:</h6>
-          <div class="d-flex gap-2 mt-2">
-            <input type="email" id="restockEmail" class="form-control rounded-pill small" placeholder="Enter your email">
-            <button class="btn btn-dark rounded-pill text-nowrap btn-sm" onclick="requestRestock('${p.id}')">Notify Me</button>
-          </div>
-        </div>`;
-    } else {
-      stockContainer.innerHTML = `<span class="badge bg-success">In Stock (${p.stock} available)</span>`;
-      actionContainer.innerHTML = `<button id="modal-add-btn" class="btn btn-luxury w-100 py-3 rounded-pill mb-4">ADD TO BAG</button>`;
-      const addBtn = document.getElementById("modal-add-btn");
-      if (addBtn) {
-        addBtn.onclick = () => {
-          addToCart(p.id, p.name, displayPrice);
-          const modalEl = document.getElementById("productModal");
-          if (modalEl) bootstrap.Modal.getInstance(modalEl).hide();
-        };
-      }
-    }
+  if (isOutOfStock) {
+    stockContainer.innerHTML = `<span class="badge bg-danger">Out of Stock</span>`;
+    actionContainer.innerHTML = `
+      <div class="bg-body-tertiary p-3 rounded-4 mb-4 text-start">
+        <h6 class="fw-bold small mb-1">Out of Stock! Get Notified:</h6>
+        <div class="d-flex gap-2 mt-2">
+          <input type="email" id="restockEmail" class="form-control rounded-pill small" placeholder="Enter your email">
+          <button class="btn btn-dark rounded-pill text-nowrap btn-sm" onclick="requestRestock('${p.id}')">Notify Me</button>
+        </div>
+      </div>`;
+  } else {
+    stockContainer.innerHTML = `<span class="badge bg-success">In Stock (${p.stock} available)</span>`;
+    actionContainer.innerHTML = `<button id="modal-add-btn" class="btn btn-luxury w-100 py-3 rounded-pill mb-4">ADD TO BAG</button>`;
+    document.getElementById("modal-add-btn").onclick = () => {
+      addToCart(p.id, p.name, displayPrice);
+      bootstrap.Modal.getInstance(document.getElementById("productModal")).hide();
+    };
   }
 
   let tagsHTML = `<span class="badge bg-secondary">${p.category || "Other"}</span>`;
   if (p.color) p.color.split(",").forEach((c) => (tagsHTML += `<span class="badge bg-dark">${c.trim()}</span>`));
-  const modalTags = document.getElementById("modal-tags");
-  if (modalTags) modalTags.innerHTML = tagsHTML;
+  document.getElementById("modal-tags").innerHTML = tagsHTML;
 
-  const modalName = document.getElementById("modal-name");
-  const modalDesc = document.getElementById("modal-desc");
-  const modalPriceContainer = document.getElementById("modal-price-container");
-  if (modalName) modalName.innerText = p.name;
-  if (modalDesc) modalDesc.innerText = p.description || "No additional details provided.";
-  if (modalPriceContainer) modalPriceContainer.innerHTML = `${hasDiscount ? `<del class="text-danger me-2">${p.price} EGP</del>` : ""}<span class="fw-bold fs-5">${displayPrice} EGP</span>`;
+  document.getElementById("modal-name").innerText = p.name;
+  document.getElementById("modal-desc").innerText = p.description || "No additional details provided.";
+  document.getElementById("modal-price-container").innerHTML = `${hasDiscount ? `<del class="text-danger me-2">${p.price} EGP</del>` : ""}<span class="fw-bold fs-5">${displayPrice} EGP</span>`;
 
-  const modalAvgStars = document.getElementById("modal-avg-stars");
-  const modalRatingText = document.getElementById("modal-rating-text");
-  if (modalAvgStars) modalAvgStars.innerHTML = renderStarIcons(avg);
-  if (modalRatingText) modalRatingText.innerText = `${avg} / 5 (${count} reviews)`;
+  document.getElementById("modal-avg-stars").innerHTML = renderStarIcons(avg);
+  document.getElementById("modal-rating-text").innerText = `${avg} / 5 (${count} reviews)`;
 
   const reviewsListEl = document.getElementById("modal-reviews-list");
-  if (reviewsListEl) {
-    if (!p.reviews || Object.keys(p.reviews).length === 0) {
-      reviewsListEl.innerHTML = `<p class="small text-muted mb-0">No reviews yet.</p>`;
-    } else {
-      reviewsListEl.innerHTML = Object.values(p.reviews)
-        .reverse()
-        .map((r) => `
-          <div class="bg-body-tertiary p-3 rounded-4 mb-2">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                  <span class="fw-bold small">${r.name || "Anonymous"}</span>
-                  <span class="small">${renderStarIcons(r.rating)}</span>
-              </div>
-              <p class="small mb-0 text-muted">${r.comment}</p>
-          </div>
-        `)
-        .join("");
-    }
+  if (!p.reviews || Object.keys(p.reviews).length === 0) {
+    reviewsListEl.innerHTML = `<p class="small text-muted mb-0">No reviews yet.</p>`;
+  } else {
+    reviewsListEl.innerHTML = Object.values(p.reviews)
+      .reverse()
+      .map((r) => `
+        <div class="bg-body-tertiary p-3 rounded-4 mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="fw-bold small">${r.name || "Anonymous"}</span>
+                <span class="small">${renderStarIcons(r.rating)}</span>
+            </div>
+            <p class="small mb-0 text-muted">${r.comment}</p>
+        </div>
+      `)
+      .join("");
   }
 
-  const productModalEl = document.getElementById("productModal");
-  if (productModalEl) new bootstrap.Modal(productModalEl).show();
+  new bootstrap.Modal(document.getElementById("productModal")).show();
 };
 
 window.openLightbox = (src) => {
-  const img = document.getElementById("lightbox-img");
-  if (img) img.src = src;
-  const modalEl = document.getElementById("lightboxModal");
-  if (modalEl) new bootstrap.Modal(modalEl).show();
+  document.getElementById("lightbox-img").src = src;
+  new bootstrap.Modal(document.getElementById("lightboxModal")).show();
 };
 
 window.shareProduct = () => {
@@ -589,7 +500,6 @@ window.requestRestock = async (productId) => {
 function renderRecentlyViewed() {
   const section = document.getElementById("recently-viewed-section");
   const container = document.getElementById("recently-viewed-list");
-  if (!section || !container) return;
   const items = allProducts.filter((p) => recentlyViewed.includes(p.id));
 
   if (items.length === 0) {
@@ -616,8 +526,6 @@ function initDeliveryMap() {
   if (mapInstance) return;
 
   const alexCenter = [31.2001, 29.9187];
-  const mapEl = document.getElementById("delivery-map");
-  if (!mapEl) return;
   mapInstance = L.map("delivery-map").setView(alexCenter, 12);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -629,8 +537,7 @@ function initDeliveryMap() {
 
   const updateAddressDisplay = (lat, lng) => {
     selectedCoords = { lat: lat.toFixed(5), lng: lng.toFixed(5) };
-    const addrInput = document.getElementById("selectedAddress");
-    if (addrInput) addrInput.value = `Lat: ${selectedCoords.lat}, Lng: ${selectedCoords.lng}`;
+    document.getElementById("selectedAddress").value = `Lat: ${selectedCoords.lat}, Lng: ${selectedCoords.lng}`;
   };
 
   updateAddressDisplay(alexCenter[0], alexCenter[1]);
@@ -646,13 +553,10 @@ function initDeliveryMap() {
   });
 }
 
-const cartModalEl = document.getElementById("cartModal");
-if (cartModalEl) {
-  cartModalEl.addEventListener("shown.bs.modal", () => {
-    initDeliveryMap();
-    if (mapInstance) mapInstance.invalidateSize();
-  });
-}
+document.getElementById("cartModal").addEventListener("shown.bs.modal", () => {
+  initDeliveryMap();
+  if (mapInstance) mapInstance.invalidateSize();
+});
 
 // Cart & Orders
 window.addToCart = (id, name, price, event) => {
@@ -665,26 +569,21 @@ window.addToCart = (id, name, price, event) => {
   updateUI();
 
   const t = document.getElementById("toast");
-  if (t) {
-    t.classList.add("show-toast");
-    setTimeout(() => t.classList.remove("show-toast"), 2000);
-  }
+  t.classList.add("show-toast");
+  setTimeout(() => t.classList.remove("show-toast"), 2000);
 };
 
 function updateUI() {
   localStorage.setItem("cart", JSON.stringify(cart));
   const totalQty = Object.values(cart).reduce((a, b) => a + b.qty, 0);
-  const cartCountEl = document.getElementById("cart-count");
-  if (cartCountEl) cartCountEl.innerText = totalQty;
+  document.getElementById("cart-count").innerText = totalQty;
 
   const wishlistCountEl = document.getElementById("wishlist-count");
-  if (wishlistCountEl) {
-    if (wishlist.length > 0) {
-      wishlistCountEl.innerText = wishlist.length;
-      wishlistCountEl.style.display = "inline-block";
-    } else {
-      wishlistCountEl.style.display = "none";
-    }
+  if (wishlist.length > 0) {
+    wishlistCountEl.innerText = wishlist.length;
+    wishlistCountEl.style.display = "inline-block";
+  } else {
+    wishlistCountEl.style.display = "none";
   }
 }
 
@@ -692,8 +591,6 @@ window.openCheckout = () => {
   const listDiv = document.getElementById("cart-items-list");
   const totalEl = document.getElementById("total-price");
   let total = 0;
-
-  if (!listDiv || !totalEl) return;
 
   if (Object.keys(cart).length === 0) {
     listDiv.innerHTML = "<p class='text-center text-muted py-4'>Your bag is empty.</p>";
@@ -720,7 +617,7 @@ window.openCheckout = () => {
     totalEl.innerText = total;
   }
 
-  if (cartModalEl) new bootstrap.Modal(cartModalEl).show();
+  new bootstrap.Modal(document.getElementById("cartModal")).show();
 };
 
 window.updateQty = (id, change) => {
@@ -731,9 +628,9 @@ window.updateQty = (id, change) => {
 };
 
 window.orderViaWhatsApp = () => {
-  const name = document.getElementById("name")?.value;
-  const phone = document.getElementById("phone")?.value;
-  const address = document.getElementById("selectedAddress")?.value;
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const address = document.getElementById("selectedAddress").value;
 
   if (!name || !phone || Object.keys(cart).length === 0) {
     alert("Please enter your name, phone number, and items to order via WhatsApp!");
@@ -749,9 +646,9 @@ window.orderViaWhatsApp = () => {
 };
 
 window.confirmOrder = async () => {
-  const name = document.getElementById("name")?.value;
-  const phone = document.getElementById("phone")?.value;
-  const address = document.getElementById("selectedAddress")?.value;
+  const name = document.getElementById("name").value;
+  const phone = document.getElementById("phone").value;
+  const address = document.getElementById("selectedAddress").value;
 
   if (!name || !phone || Object.keys(cart).length === 0) {
     alert("Please complete your information!");
@@ -771,9 +668,8 @@ window.confirmOrder = async () => {
 
   try {
     await push(ref(db, "orders"), orderData);
-    if (cartModalEl) bootstrap.Modal.getInstance(cartModalEl).hide();
-    const successToast = document.getElementById("successToast");
-    if (successToast) successToast.classList.add("show-success");
+    bootstrap.Modal.getInstance(document.getElementById("cartModal")).hide();
+    document.getElementById("successToast").classList.add("show-success");
     cart = {};
     updateUI();
     setTimeout(() => location.reload(), 3000);
@@ -781,120 +677,4 @@ window.confirmOrder = async () => {
     console.error(e);
     alert("Error sending order. Please try again!");
   }
-};
-
-// ==========================================================
-// IMAGE COMPRESSION, BASE64 CONVERSION & VALIDATION INTERCEPTION
-// ==========================================================
-document.addEventListener("DOMContentLoaded", () => {
-  const imageInput = document.getElementById("imageInput");
-  if (!imageInput) return;
-
-  imageInput.addEventListener("change", async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (file.size <= 0.7 * 1024 * 1024 || file._isCompressed) return;
-
-    event.stopImmediatePropagation();
-    event.preventDefault();
-
-    try {
-      const compressedFile = await compressImageByQuality(file, 0.7);
-      compressedFile._isCompressed = true;
-
-      const base64String = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = (error) => reject(error);
-        reader.readAsDataURL(compressedFile);
-      });
-
-      window.currentProductImageText = base64String;
-
-      const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(compressedFile);
-      imageInput.files = dataTransfer.files;
-
-      const previewEl = document.getElementById("imagePreview");
-      if (previewEl) {
-        previewEl.src = base64String;
-        previewEl.style.display = "block";
-      }
-
-      const newEvent = new Event("change", { bubbles: true });
-      imageInput.dispatchEvent(newEvent);
-
-    } catch (err) {
-      console.error("Image compression/conversion error:", err);
-    }
-  }, { capture: true });
-});
-
-async function compressImageByQuality(file, maxSizeMB = 0.7) {
-  const maxSizeBytes = maxSizeMB * 1024 * 1024;
-  if (file.size <= maxSizeBytes) return file;
-
-  const image = await new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = (err) => reject(err);
-    img.src = URL.createObjectURL(file);
-  });
-
-  const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
-
-  let width = image.width;
-  let height = image.height;
-
-  const MAX_DIMENSION = 2048;
-  if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
-    if (width > height) {
-      height = Math.round((height * MAX_DIMENSION) / width);
-      width = MAX_DIMENSION;
-    } else {
-      width = Math.round((width * MAX_DIMENSION) / height);
-      height = MAX_DIMENSION;
-    }
-  }
-
-  canvas.width = width;
-  canvas.height = height;
-  ctx.drawImage(image, 0, 0, width, height);
-
-  let quality = 0.90;
-  let blob = null;
-
-  while (quality >= 0.10) {
-    blob = await new Promise((resolve) => {
-      canvas.toBlob((b) => resolve(b), "image/jpeg", quality);
-    });
-
-    if (blob && blob.size <= maxSizeBytes) break;
-    quality -= 0.10;
-  }
-
-  while (blob && blob.size > maxSizeBytes) {
-    width = Math.floor(width * 0.80);
-    height = Math.floor(height * 0.80);
-
-    canvas.width = width;
-    canvas.height = height;
-
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(image, 0, 0, width, height);
-
-    blob = await new Promise((resolve) => {
-      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.50);
-    });
-  }
-
-  URL.revokeObjectURL(image.src);
-
-  const originalName = file.name.substring(0, file.name.lastIndexOf(".")) || file.name;
-  return new File([blob], `${originalName}.jpg`, {
-    type: "image/jpeg",
-    lastModified: Date.now()
-  });
-}
+}; i dont want you to change anything else
