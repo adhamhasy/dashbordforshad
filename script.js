@@ -677,4 +677,4 @@ window.confirmOrder = async () => {
     console.error(e);
     alert("Error sending order. Please try again!");
   }
-}; i dont want you to change anything else
+};
