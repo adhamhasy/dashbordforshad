@@ -11,17 +11,18 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
 
         body {
-            background: #f4f7f6;
+            background: #FAF5ED;
             font-family: 'Plus Jakarta Sans', sans-serif;
             padding: 20px;
+            color: #2D2926;
         }
 
         .section-card {
             background: white;
             border-radius: 25px;
             padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+            border: 1px solid #EFE8DE;
             margin-bottom: 30px;
         }
 
@@ -33,46 +34,25 @@
         }
 
         .btn-luxury:hover {
-            background: #D4AF37;
+            background: #8C6D53;
             color: white;
         }
 
         #drop-zone {
-            border: 2px dashed #ccc;
+            border: 2px dashed #DCD4C8;
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             text-align: center;
-            background: #fafafa;
+            background: #FDFBF7;
             cursor: pointer;
-            transition: 0.3s;
         }
 
-        #drop-zone.dragover {
-            background: #e9ecef;
-            border-color: #D4AF37;
-        }
-
-        #preview-img {
-            width: 90px;
-            height: 90px;
-            object-fit: cover;
+        .variant-row {
+            background: #FDFBF7;
+            border: 1px solid #EFE8DE;
             border-radius: 15px;
-            display: none;
-            margin: 10px auto;
-        }
-
-        .order-card {
-            border-radius: 20px;
-            border: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-            transition: 0.3s;
-        }
-
-        .table img {
-            width: 45px;
-            height: 45px;
-            object-fit: cover;
-            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
         }
     </style>
 </head>
@@ -80,7 +60,7 @@
 <body>
 
     <div class="container-fluid">
-        <h2 class="fw-bold mb-5">Kareem Manager Dashboard</h2>
+        <h2 class="fw-bold mb-4">Manager Dashboard</h2>
 
         <div class="row">
             <div class="col-lg-5">
@@ -94,30 +74,18 @@
                             <input type="text" id="p-name" class="form-control" placeholder="Product name">
                         </div>
 
-                        <div class="col-12">
-                            <label class="small fw-bold">Category</label>
-                            <input type="text" id="p-category" class="form-control" list="category-options" placeholder="Cable, Phone Case, Charger, etc.">
-                            <datalist id="category-options">
-                                <option value="Cable">
-                                <option value="Phone Case">
-                                <option value="Charger">
-                                <option value="Audio">
-                                <option value="Accessories">
-                            </datalist>
-                        </div>
-
                         <div class="col-6">
-                            <label class="small fw-bold">Color(s)</label>
-                            <input type="text" id="p-color" class="form-control" placeholder="Black, White, Gold">
+                            <label class="small fw-bold">Category</label>
+                            <input type="text" id="p-category" class="form-control" placeholder="Cable, Charger, etc.">
                         </div>
 
                         <div class="col-6">
                             <label class="small fw-bold">Phone Type / Model</label>
-                            <input type="text" id="p-phonetype" class="form-control" placeholder="iPhone 15, Samsung S24">
+                            <input type="text" id="p-phonetype" class="form-control" placeholder="iPhone 15, S24">
                         </div>
 
                         <div class="col-4">
-                            <label class="small fw-bold">Original Price</label>
+                            <label class="small fw-bold">Price (EGP)</label>
                             <input type="number" id="p-price" class="form-control" placeholder="1500">
                         </div>
 
@@ -127,66 +95,48 @@
                         </div>
 
                         <div class="col-4">
-                            <label class="small fw-bold">Stock Quantity</label>
-                            <input type="number" id="p-stock" class="form-control" placeholder="5" value="5">
+                            <label class="small fw-bold">Stock</label>
+                            <input type="number" id="p-stock" class="form-control" value="5">
+                        </div>
+
+                        <!-- Multi-Color Variant Builder -->
+                        <div class="col-12 border-top pt-3 mt-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="small fw-bold mb-0">Color Variants (Specific Images)</label>
+                                <button type="button" class="btn btn-sm btn-outline-dark rounded-pill" onclick="addVariantRow()">+ Add Color</button>
+                            </div>
+                            <div id="variants-container"></div>
                         </div>
 
                         <div class="col-12">
-                            <label class="small fw-bold">Additional Image URLs (Comma separated)</label>
-                            <input type="text" id="p-images" class="form-control" placeholder="https://img2.jpg, https://img3.jpg">
-                        </div>
-
-                        <div class="col-12">
-                            <label class="small fw-bold">Details & Specs</label>
-                            <textarea id="p-desc" class="form-control" rows="3" placeholder="e.g. Type-C Cable, 1M length, fast charging."></textarea>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="small fw-bold">Main Product Image</label>
+                            <label class="small fw-bold">Main Product Default Image</label>
                             <div id="drop-zone">
                                 <p id="upload-status" class="mb-0 text-muted small">
-                                    <i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i> Drag & Drop Image or Click to Select
+                                    <i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i> Upload Main Image
                                 </p>
-                                <img id="preview-img" src="">
                                 <input type="file" id="p-file" hidden accept="image/*">
-                                <input type="hidden" id="p-img-data">
+                                <input type="hidden" id="p-img-url">
                             </div>
                         </div>
 
                         <div class="col-12">
-                            <button class="btn btn-luxury w-100 py-3 mt-3" onclick="saveProduct()">SAVE TO SHOP</button>
+                            <label class="small fw-bold">Details & Specs</label>
+                            <textarea id="p-desc" class="form-control" rows="2" placeholder="Product details..."></textarea>
                         </div>
-                    </div>
 
-                    <hr class="my-5">
-                    <h5 class="fw-bold mb-3">Inventory</h5>
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <tbody id="inventory-list"></tbody>
-                        </table>
+                        <div class="col-12">
+                            <button class="btn btn-luxury w-100 py-3 mt-2" onclick="saveProduct()">SAVE TO SHOP</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div class="col-lg-7">
                 <div class="section-card">
-                    <h4 class="fw-bold mb-4 d-flex align-items-center gap-2">Live Orders <i class="bi bi-inbox-fill"></i></h4>
-                    <div id="order-container" class="row"></div>
-                </div>
-
-                <div class="section-card mt-4">
-                    <h4 class="fw-bold mb-4 d-flex align-items-center gap-2">Restock Alerts <i class="bi bi-bell-fill"></i></h4>
+                    <h4 class="fw-bold mb-4">Live Inventory</h4>
                     <div class="table-responsive">
                         <table class="table align-middle">
-                            <thead>
-                                <tr class="small text-muted">
-                                    <th>PRODUCT ID</th>
-                                    <th>EMAIL</th>
-                                    <th>DATE</th>
-                                    <th>ACTION</th>
-                                </tr>
-                            </thead>
-                            <tbody id="restock-container"></tbody>
+                            <tbody id="inventory-list"></tbody>
                         </table>
                     </div>
                 </div>
@@ -195,81 +145,117 @@
     </div>
 
     <script type="module">
-        import { db, ref, push, set, onValue, remove } from './firebase-config.js';
+        import { db, ref, push, set, onValue, remove, storage, storageRef, uploadBytes, getDownloadURL } from './firebase-config.js';
 
         const fileInput = document.getElementById('p-file');
         const dropZone = document.getElementById('drop-zone');
-        const imgPreview = document.getElementById('preview-img');
-        const statusText = document.getElementById('upload-status');
-        const hiddenImgInput = document.getElementById('p-img-data');
+        const hiddenImgUrl = document.getElementById('p-img-url');
 
         dropZone.onclick = () => fileInput.click();
-        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
-        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
-        dropZone.ondrop = (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            handleFile(e.dataTransfer.files[0]);
+
+        // Client-Side Canvas Image Compression (#2)
+        function compressImage(file, maxWidth = 1000) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', 0.82);
+                    };
+                };
+            });
+        }
+
+        // Firebase Storage Upload (#1)
+        async function uploadFileToCloud(file) {
+            const compressed = await compressImage(file);
+            const fileRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
+            const snapshot = await uploadBytes(fileRef, compressed);
+            return await getDownloadURL(snapshot.ref);
+        }
+
+        fileInput.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('upload-status').innerText = "Compressing & Uploading to Firebase...";
+            const url = await uploadFileToCloud(file);
+            hiddenImgUrl.value = url;
+            document.getElementById('upload-status').innerText = "Uploaded!";
         };
 
-        fileInput.onchange = (e) => handleFile(e.target.files[0]);
+        // Variant Rows Logic
+        window.addVariantRow = (color = "", img = "") => {
+            const container = document.getElementById('variants-container');
+            const row = document.createElement('div');
+            row.className = "variant-row d-flex gap-2 align-items-center";
+            row.innerHTML = `
+                <input type="text" class="form-control form-control-sm variant-color" placeholder="Color (e.g. Blue)" value="${color}">
+                <input type="text" class="form-control form-control-sm variant-img" placeholder="Image URL" value="${img}">
+                <input type="file" class="d-none variant-file" accept="image/*">
+                <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" onclick="this.previousElementSibling.click()">Upload</button>
+                <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">X</button>
+            `;
 
-        function handleFile(file) {
-            if (!file) return;
-            if (file.size > 1000000) return alert("Image too large! Use photo under 1MB.");
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const base64String = e.target.result;
-                hiddenImgInput.value = base64String;
-                imgPreview.src = base64String;
-                imgPreview.style.display = "block";
-                statusText.innerHTML = '<i class="bi bi-check-circle-fill text-success fs-5"></i> Image Ready';
+            row.querySelector('.variant-file').onchange = async (e) => {
+                const f = e.target.files[0];
+                if (!f) return;
+                const url = await uploadFileToCloud(f);
+                row.querySelector('.variant-img').value = url;
             };
-            reader.readAsDataURL(file);
-        }
+
+            container.appendChild(row);
+        };
 
         window.saveProduct = async () => {
             const id = document.getElementById('editing-id').value;
             const name = document.getElementById('p-name').value;
             const category = document.getElementById('p-category').value || "Other";
-            const color = document.getElementById('p-color').value || "";
             const phoneType = document.getElementById('p-phonetype').value || "";
             const price = document.getElementById('p-price').value;
             const discount = document.getElementById('p-discount').value;
             const stock = document.getElementById('p-stock').value || 5;
-            const imagesRaw = document.getElementById('p-images').value;
             const description = document.getElementById('p-desc').value;
-            const imgData = hiddenImgInput.value;
+            const mainImg = hiddenImgUrl.value;
 
-            if (!name || !price || !imgData) return alert("Fill Name, Price and Image!");
+            // Collect Variants
+            const variantRows = document.querySelectorAll('.variant-row');
+            const variants = [];
+            variantRows.forEach(r => {
+                const c = r.querySelector('.variant-color').value.trim();
+                const i = r.querySelector('.variant-img').value.trim();
+                if (c) variants.push({ color: c, img: i || mainImg });
+            });
 
-            const additionalImages = imagesRaw ? imagesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+            if (!name || !price || !mainImg) return alert("Please complete name, price, and main image!");
 
             const data = {
-                name,
-                category,
-                color,
-                phoneType,
+                name, category, phoneType,
                 price: Number(price),
                 discountPrice: discount ? Number(discount) : null,
                 stock: Number(stock),
-                images: additionalImages,
                 description: description || "",
-                img: imgData
+                img: mainImg,
+                variants
             };
 
-            if (id) {
-                await set(ref(db, 'products/' + id), data);
-                document.getElementById('editing-id').value = "";
-            } else {
-                await push(ref(db, 'products'), data);
-            }
+            if (id) await set(ref(db, 'products/' + id), data);
+            else await push(ref(db, 'products'), data);
 
-            document.querySelectorAll('input, textarea').forEach(i => i.value = "");
-            imgPreview.style.display = "none";
-            statusText.innerHTML = '<i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i> Drag & Drop Image or Click to Select';
-            alert("Product Saved!");
+            alert("Saved successfully!");
+            location.reload();
         };
 
         onValue(ref(db, 'products'), (snap) => {
@@ -280,96 +266,14 @@
                 const p = data[id];
                 list.innerHTML += `
                     <tr>
-                        <td><img src="${p.img}"></td>
-                        <td>
-                            <div class="small fw-bold">${p.name}</div>
-                            <span class="badge bg-secondary">${p.category || 'Other'}</span>
-                            <span class="badge ${p.stock > 0 ? 'bg-success' : 'bg-danger'}">Stock: ${p.stock ?? 0}</span>
-                        </td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-outline-dark me-1" onclick="editProduct('${id}')"><i class="bi bi-pencil"></i></button>
-                            <button class="btn btn-sm btn-danger" onclick="deleteProduct('${id}')"><i class="bi bi-trash"></i></button>
-                        </td>
+                        <td><img src="${p.img}" style="width:40px; height:40px; object-fit:cover; border-radius:8px;"></td>
+                        <td><div class="fw-bold small">${p.name}</div><small class="text-muted">${p.price} EGP</small></td>
+                        <td class="text-end"><button class="btn btn-sm btn-danger" onclick="deleteProduct('${id}')"><i class="bi bi-trash"></i></button></td>
                     </tr>`;
             }
         });
 
-        window.editProduct = (id) => {
-            onValue(ref(db, 'products/' + id), (snap) => {
-                const p = snap.val();
-                if (!p) return;
-                document.getElementById('editing-id').value = id;
-                document.getElementById('p-name').value = p.name || "";
-                document.getElementById('p-category').value = p.category || "";
-                document.getElementById('p-color').value = p.color || "";
-                document.getElementById('p-phonetype').value = p.phoneType || "";
-                document.getElementById('p-price').value = p.price || "";
-                document.getElementById('p-discount').value = p.discountPrice || "";
-                document.getElementById('p-stock').value = p.stock ?? 5;
-                document.getElementById('p-images').value = p.images ? p.images.join(', ') : "";
-                document.getElementById('p-desc').value = p.description || "";
-                hiddenImgInput.value = p.img || "";
-                imgPreview.src = p.img || "";
-                imgPreview.style.display = p.img ? "block" : "none";
-                window.scrollTo(0, 0);
-            }, { onlyOnce: true });
-        };
-
         window.deleteProduct = (id) => { if (confirm("Delete product?")) remove(ref(db, 'products/' + id)); };
-
-        // Orders List
-        onValue(ref(db, 'orders'), (snap) => {
-            const container = document.getElementById('order-container');
-            container.innerHTML = "";
-            const data = snap.val();
-            if (!data) return container.innerHTML = "<p class='text-muted text-center py-4 mb-0'>Waiting for orders...</p>";
-
-            Object.keys(data).reverse().forEach(id => {
-                const o = data[id];
-                const mapUrl = o.coords ? `https://www.google.com/maps?q=${o.coords.lat},${o.coords.lng}` : "#";
-                container.innerHTML += `
-                    <div class="col-12 mb-3">
-                        <div class="card order-card p-3 bg-white">
-                            <div class="d-flex justify-content-between">
-                                <h6 class="fw-bold mb-0">${o.custName}</h6>
-                                <span class="fw-bold text-success">${o.total} EGP</span>
-                            </div>
-                            <small class="text-muted d-block mb-1">${o.custLocation || "Alexandria"}</small>
-                            <p class="small mb-2"><strong>Items:</strong> ${o.items}</p>
-                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                <div class="d-flex gap-1">
-                                    <a href="tel:${o.custPhone}" class="btn btn-sm btn-outline-primary rounded-pill d-flex align-items-center gap-1"><i class="bi bi-telephone-fill"></i> Call ${o.custPhone}</a>
-                                    ${o.coords ? `<a href="${mapUrl}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"><i class="bi bi-geo-alt-fill text-danger"></i> Map Location</a>` : ''}
-                                </div>
-                                <button class="btn btn-sm btn-dark rounded-pill" onclick="clearOrder('${id}')">Done</button>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-        });
-
-        window.clearOrder = (id) => { if (confirm("Clear order?")) remove(ref(db, 'orders/' + id)); };
-
-        // Restock Alerts List
-        onValue(ref(db, 'restock_requests'), (snap) => {
-            const container = document.getElementById('restock-container');
-            container.innerHTML = "";
-            const data = snap.val();
-            if (!data) return container.innerHTML = "<tr><td colspan='4' class='text-muted text-center py-3'>No restock requests.</td></tr>";
-
-            Object.keys(data).reverse().forEach(id => {
-                const r = data[id];
-                container.innerHTML += `
-                    <tr>
-                        <td class="small fw-bold">${r.productId}</td>
-                        <td class="small">${r.email}</td>
-                        <td class="small text-muted">${new Date(r.date).toLocaleDateString()}</td>
-                        <td><button class="btn btn-sm btn-outline-danger rounded-pill" onclick="removeRestock('${id}')">Remove</button></td>
-                    </tr>`;
-            });
-        });
-
-        window.removeRestock = (id) => { remove(ref(db, 'restock_requests/' + id)); };
     </script>
 </body>
 
