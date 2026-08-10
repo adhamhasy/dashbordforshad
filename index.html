@@ -65,7 +65,11 @@
         <div class="row">
             <div class="col-lg-5">
                 <div class="section-card">
-                    <h4 class="fw-bold mb-4">Product Management</h4>
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold mb-0" id="form-title">Add Product</h4>
+                        <button class="btn btn-sm btn-outline-secondary rounded-pill d-none" id="cancel-edit-btn" onclick="resetForm()">Cancel Edit</button>
+                    </div>
+
                     <div class="row g-3">
                         <input type="hidden" id="editing-id">
 
@@ -125,7 +129,7 @@
                         </div>
 
                         <div class="col-12">
-                            <button class="btn btn-luxury w-100 py-3 mt-2" onclick="saveProduct()">SAVE TO SHOP</button>
+                            <button class="btn btn-luxury w-100 py-3 mt-2" id="save-btn" onclick="saveProduct()">SAVE TO SHOP</button>
                         </div>
                     </div>
                 </div>
@@ -147,13 +151,14 @@
     <script type="module">
         import { db, ref, push, set, onValue, remove } from './firebase-config.js';
 
+        let productsData = {};
         const fileInput = document.getElementById('p-file');
         const dropZone = document.getElementById('drop-zone');
         const hiddenImgBase64 = document.getElementById('p-img-base64');
 
         dropZone.onclick = () => fileInput.click();
 
-        // Canvas Image Compression (Direct Base64 String generation)
+        // Canvas Image Compression to Base64 String
         function compressImageToBase64(file, maxWidth = 550, quality = 0.65) {
             return new Promise((resolve, reject) => {
                 if (!file) return resolve('');
@@ -250,21 +255,69 @@
             if (id) await set(ref(db, 'products/' + id), data);
             else await push(ref(db, 'products'), data);
 
-            alert("Product saved successfully!");
-            location.reload();
+            alert(id ? "Product updated successfully!" : "Product saved successfully!");
+            resetForm();
+        };
+
+        window.editProduct = (id) => {
+            const p = productsData[id];
+            if (!p) return;
+
+            document.getElementById('editing-id').value = id;
+            document.getElementById('p-name').value = p.name || '';
+            document.getElementById('p-category').value = p.category || '';
+            document.getElementById('p-phonetype').value = p.phoneType || '';
+            document.getElementById('p-price').value = p.price || '';
+            document.getElementById('p-discount').value = p.discountPrice || '';
+            document.getElementById('p-stock').value = p.stock ?? 5;
+            document.getElementById('p-desc').value = p.description || '';
+            hiddenImgBase64.value = p.img || '';
+
+            document.getElementById('upload-status').innerText = p.img ? "Image Loaded (Click to change)" : "Choose Image File";
+            document.getElementById('form-title').innerText = "Edit Product";
+            document.getElementById('save-btn').innerText = "UPDATE PRODUCT";
+            document.getElementById('cancel-edit-btn').classList.remove('d-none');
+
+            const variantsContainer = document.getElementById('variants-container');
+            variantsContainer.innerHTML = "";
+            if (p.variants && p.variants.length > 0) {
+                p.variants.forEach(v => addVariantRow(v.color, v.img));
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.resetForm = () => {
+            document.getElementById('editing-id').value = '';
+            document.getElementById('p-name').value = '';
+            document.getElementById('p-category').value = '';
+            document.getElementById('p-phonetype').value = '';
+            document.getElementById('p-price').value = '';
+            document.getElementById('p-discount').value = '';
+            document.getElementById('p-stock').value = '5';
+            document.getElementById('p-desc').value = '';
+            hiddenImgBase64.value = '';
+            document.getElementById('upload-status').innerText = "Choose Image File";
+            document.getElementById('form-title').innerText = "Add Product";
+            document.getElementById('save-btn').innerText = "SAVE TO SHOP";
+            document.getElementById('cancel-edit-btn').classList.add('d-none');
+            document.getElementById('variants-container').innerHTML = "";
         };
 
         onValue(ref(db, 'products'), (snap) => {
-            const data = snap.val();
+            productsData = snap.val() || {};
             const list = document.getElementById('inventory-list');
             list.innerHTML = "";
-            for (let id in data) {
-                const p = data[id];
+            for (let id in productsData) {
+                const p = productsData[id];
                 list.innerHTML += `
                     <tr>
                         <td><img src="${p.img}" style="width:40px; height:40px; object-fit:cover; border-radius:8px;"></td>
                         <td><div class="fw-bold small">${p.name}</div><small class="text-muted">${p.price} EGP</small></td>
-                        <td class="text-end"><button class="btn btn-sm btn-danger" onclick="deleteProduct('${id}')"><i class="bi bi-trash"></i></button></td>
+                        <td class="text-end text-nowrap">
+                            <button class="btn btn-sm btn-outline-dark me-1" onclick="editProduct('${id}')" title="Edit"><i class="bi bi-pencil"></i></button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteProduct('${id}')" title="Delete"><i class="bi bi-trash"></i></button>
+                        </td>
                     </tr>`;
             }
         });
