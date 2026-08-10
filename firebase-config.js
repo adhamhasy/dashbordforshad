@@ -8,6 +8,12 @@ import {
   onValue,
   remove,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB8nGEaOG7yRVZv_lBbWny3Zty03bbLwxE",
@@ -22,6 +28,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const storage = getStorage(app);
 
-// Exporting these makes them available to script.js and worker.js
-export { db, ref, push, set, onValue, remove };
+export { db, ref, push, set, onValue, remove, storage, storageRef, uploadBytes, getDownloadURL };
