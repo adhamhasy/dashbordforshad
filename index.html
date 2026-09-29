@@ -1,501 +1,557 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kareem Store | Manager Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title data-i18n="title">Supermarket Store</title>
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="favicon-512.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons (used throughout: stars, share, WhatsApp, location pin, toasts, etc.) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Leaflet CSS for Delivery Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
-
-        body {
-            background: #FAF5ED;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            padding: 20px;
-            color: #2D2926;
+        /* Dark Mode Overrides */
+        body.dark-mode {
+            background-color: #121212 !important;
+            color: #e0e0e0 !important;
         }
-
-        .section-card {
-            background: white;
-            border-radius: 25px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
-            border: 1px solid #EFE8DE;
-            margin-bottom: 30px;
+        body.dark-mode .bg-light, 
+        body.dark-mode .bg-white {
+            background-color: #1e1e1e !important;
+            color: #e0e0e0 !important;
         }
-
-        .btn-luxury {
-            background: #2D2926;
-            color: white;
-            border-radius: 50px;
-            font-weight: 600;
+        body.dark-mode .text-dark {
+            color: #f8f9fa !important;
         }
-
-        .btn-luxury:hover {
-            background: #8C6D53;
-            color: white;
+        body.dark-mode .navbar, 
+        body.dark-mode header {
+            border-bottom: 1px solid #333 !important;
         }
-
-        #drop-zone {
-            border: 2px dashed #DCD4C8;
-            border-radius: 20px;
-            padding: 25px;
-            text-align: center;
-            background: #FDFBF7;
-            cursor: pointer;
+        body.dark-mode .border-top, 
+        body.dark-mode .border-bottom {
+            border-color: #333 !important;
         }
-
-        .variant-row {
-            background: #FDFBF7;
-            border: 1px solid #EFE8DE;
-            border-radius: 15px;
-            padding: 12px;
-            margin-bottom: 10px;
+        body.dark-mode .modal-content {
+            background-color: #242424 !important;
+            color: #ffffff !important;
+        }
+        body.dark-mode .form-control,
+        body.dark-mode .form-select,
+        body.dark-mode .input-group-text {
+            background-color: #333 !important;
+            color: #fff !important;
+            border-color: #444 !important;
+        }
+        body.dark-mode .form-control::placeholder {
+            color: #aaa !important;
+        }
+        body.dark-mode .btn-outline-dark {
+            color: #fff;
+            border-color: #fff;
+        }
+        body.dark-mode .btn-outline-dark:hover {
+            background-color: #fff;
+            color: #000;
+        }
+        body.dark-mode .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        body.dark-mode .text-muted {
+            color: #a0a0a0 !important;
         }
     </style>
 </head>
+<body class="bg-light">
 
-<body>
-
-    <div class="container-fluid">
-        <h2 class="fw-bold mb-4">Manager Dashboard</h2>
-
-        <button id="fix-db-btn" class="btn btn-warning mb-4 fw-bold" onclick="batchCompressDatabase()">
-    <i class="bi bi-tools"></i> Fix & Compress Old Database Images
-</button>
-
-        <div class="row">
-            <!-- Left Column: Add / Edit Product Form -->
-            <div class="col-lg-5">
-                <div class="section-card">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4 class="fw-bold mb-0" id="form-title">Add Product</h4>
-                        <button class="btn btn-sm btn-outline-secondary rounded-pill d-none" id="cancel-edit-btn" onclick="resetForm()">Cancel Edit</button>
+    <!-- Header -->
+    <header class="sticky-top bg-white border-bottom shadow-sm">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white container-fluid px-3 py-2">
+            <div class="container-fluid p-0 d-flex flex-column gap-2">
+                
+                <!-- Top Row: Brand, Delivery, and All Actions -->
+                <div class="d-flex align-items-center justify-content-between w-100">
+                    
+                    <!-- Brand & Delivery (Left) -->
+                    <div class="d-flex align-items-center gap-3">
+                        <a class="navbar-brand fw-bold text-uppercase tracking-wider text-dark m-0" href="#" data-i18n="brand">
+                            Supermarket
+                        </a>
+                        
+                        <div class="d-none d-md-flex align-items-center text-dark" style="font-size: 0.85rem; cursor: pointer;" onclick="window.openCheckout()">
+                            <svg width="18" height="18" fill="currentColor" class="me-1 text-primary" viewBox="0 0 16 16">
+                                <path d="M8 16s6-5.686 6-10A6 6 0 0 0 2 6c0 4.314 6 10 6 10m0-7a3 3 0 1 1 0-6 3 3 0 0 1 0 6"/>
+                            </svg>
+                            <div>
+                                <div class="text-muted lh-1" style="font-size: 0.7rem;" data-i18n="deliverTo">Deliver to</div>
+                                <div class="fw-bold lh-1" data-i18n="selectSpot">Select Delivery Spot</div>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="row g-3">
-                        <input type="hidden" id="editing-id">
+                    <!-- Action Controls (Right) -->
+                    <div class="d-flex align-items-center gap-2">
+                        <!-- EN/AR Translation Toggle -->
+                        <button class="btn btn-outline-secondary btn-sm fw-bold rounded-pill" id="langToggle">عربي</button>
+                        
+                        <!-- Dark Mode Toggle -->
+                        <button class="btn btn-outline-secondary btn-sm rounded-circle d-flex align-items-center justify-content-center p-2" id="darkModeToggle" style="width: 32px; height: 32px;">
+                            <svg id="moonIcon" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"/>
+                            </svg>
+                        </button>
 
-                        <div class="col-12">
-                            <label class="small fw-bold">Product Name</label>
-                            <input type="text" id="p-name" class="form-control" placeholder="Product name">
+                        <!-- Sort & Filter Icons -->
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-outline-dark btn-sm rounded-pill d-flex align-items-center gap-1 position-relative" data-bs-toggle="modal" data-bs-target="#sortModal">
+                                <span class="d-none d-md-inline" data-i18n="sort">Sort</span>
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M3.5 2.5a.5.5 0 0 0-1 0v8.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L3.5 11.293zm4 0a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zm0 3a.5.5 0 0 1 0-1h5a.5.5 0 0 1 0 1zm0 3a.5.5 0 0 1 0-1h3a.5.5 0 0 1 0 1zm0 3a.5.5 0 0 1 0-1h1a.5.5 0 0 1 0 1z"/></svg>
+                                <span id="sort-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="display:none; font-size:0.6rem;">•</span>
+                            </button>
+                            <button class="btn btn-outline-dark btn-sm rounded-pill d-flex align-items-center gap-1 position-relative" data-bs-toggle="modal" data-bs-target="#filterModal">
+                                <span class="d-none d-md-inline" data-i18n="filter">Filter</span>
+                                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/></svg>
+                                <span id="filter-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none; font-size:0.6rem;">0</span>
+                            </button>
                         </div>
 
-                        <div class="col-6">
-                            <label class="small fw-bold">Category</label>
-                            <input type="text" id="p-category" class="form-control" placeholder="Cable, Charger, etc.">
-                        </div>
+                        <!-- My Orders -->
+                        <button class="btn btn-link text-dark position-relative p-1" onclick="window.openMyOrdersModal()" title="My Orders">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg>
+                            <span id="my-orders-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
+                        </button>
 
-                        <div class="col-6">
-                            <label class="small fw-bold">Phone Type / Model</label>
-                            <input type="text" id="p-phonetype" class="form-control" placeholder="iPhone 15, S24">
-                        </div>
+                        <!-- Wishlist -->
+                        <button class="btn btn-link text-dark position-relative p-1" onclick="window.openWishlistModal()">
+                            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"/></svg>
+                            <span id="wishlist-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display:none;">0</span>
+                        </button>
 
-                        <div class="col-4">
-                            <label class="small fw-bold">Price (EGP)</label>
-                            <input type="number" id="p-price" class="form-control" placeholder="1500">
-                        </div>
+                        <!-- Cart Bag -->
+                        <button id="cart-bag-btn" class="btn btn-dark rounded-pill px-3 fw-bold d-flex align-items-center gap-2" onclick="openCheckout()">
+                            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 1a2.5 2.5 0 0 0-2.5 2.5V4h5v-.5A2.5 2.5 0 0 0 8 1m3.5 3v-.5a3.5 3.5 0 1 0-7 0V4H1v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V4zM2 5h12v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>
+                            <span id="cart-count" class="badge bg-primary text-white rounded-circle">0</span>
+                        </button>
+                    </div>
 
-                        <div class="col-4">
-                            <label class="small fw-bold">Sale Price</label>
-                            <input type="number" id="p-discount" class="form-control" placeholder="1200">
-                        </div>
+                </div>
 
-                        <div class="col-4">
-                            <label class="small fw-bold">Stock</label>
-                            <input type="number" id="p-stock" class="form-control" value="5">
-                        </div>
+                <!-- Bottom Row: Dedicated Full-Width Search Bar (Flexbox Fix for RTL/LTR) -->
+<div class="w-100">
+    <div class="d-flex align-items-stretch w-100 shadow-sm rounded-pill bg-light border" style="overflow: hidden;">
+        <input type="text" id="searchInput" class="form-control bg-transparent border-0 shadow-none px-4 translatable-placeholder" placeholder="Search products, brands, essentials..." aria-label="Search" style="outline: none !important; box-shadow: none !important;">
+        <button class="btn btn-dark px-4 rounded-0 d-flex align-items-center justify-content-center border-0" type="button" onclick="window.filterAndSortProducts()" style="background-color: #212529;">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/></svg>
+        </button>
+    </div>
+</div>
+            </div>
+        </nav>
 
-                        <!-- Multi-Color Variant Builder -->
-                        <div class="col-12 border-top pt-3 mt-3">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="small fw-bold mb-0">Color Variants (Specific Images)</label>
-                                <button type="button" class="btn btn-sm btn-outline-dark rounded-pill" onclick="addVariantRow()">+ Add Color</button>
-                            </div>
-                            <div id="variants-container"></div>
-                        </div>
+        <!-- Category Horizontal Scroll Bar -->
+        <div class="bg-light py-2 px-3 border-top overflow-x-auto">
+            <div id="modal-category-filters" class="d-flex align-items-center gap-2 text-nowrap">
+                <!-- Categories loaded dynamically by JS -->
+            </div>
+        </div>
+    </header>
 
-                        <div class="col-12">
-                            <label class="small fw-bold">Main Product Default Image</label>
-                            <div id="drop-zone">
-                                <p id="upload-status" class="mb-0 text-muted small">
-                                    <i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i> Choose Image File
-                                </p>
-                                <input type="file" id="p-file" hidden accept="image/*">
-                                <input type="hidden" id="p-img-base64">
-                            </div>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="small fw-bold">Details & Specs</label>
-                            <textarea id="p-desc" class="form-control" rows="2" placeholder="Product details..."></textarea>
-                        </div>
-
-                        <div class="col-12">
-                            <button class="btn btn-luxury w-100 py-3 mt-2" id="save-btn" onclick="saveProduct()">SAVE TO SHOP</button>
+    <main class="container-fluid py-3 px-md-4">
+        <!-- Hero Banner Carousel -->
+        <div id="heroCarousel" class="carousel slide rounded-4 overflow-hidden mb-4 shadow-sm" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <div class="carousel-item active bg-dark text-white p-4 p-md-5 text-center text-md-start" style="min-height: 200px; background: linear-gradient(135deg, #0f172a, #334155);">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <span class="badge bg-light text-dark mb-2" data-i18n="heroBadge">Daily Supermarket Deals</span>
+                            <h2 class="fw-bold fs-3 fs-md-2" data-i18n="heroTitle">Your Everyday Pantry & Grocery Store</h2>
+                            <p class="text-light opacity-75 mb-3 small-md" data-i18n="heroSub">Shop everyday essentials, packaged goods, and daily items delivered fast.</p>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Right Column: Live Inventory List -->
-            <div class="col-lg-7">
-                <div class="section-card">
-                    <h4 class="fw-bold mb-4">Live Inventory</h4>
-                    <div class="table-responsive">
-                        <table class="table align-middle">
-                            <tbody id="inventory-list"></tbody>
-                        </table>
+        <div id="active-filter-tags" class="d-flex flex-wrap gap-2 mb-3"></div>
+
+        <!-- Product Grid Display -->
+        <section class="mb-5">
+            <div id="product-list" class="row g-2 g-md-3">
+                <!-- Items injected dynamically by script.js -->
+            </div>
+            <div id="scroll-sentinel" class="py-4 text-center"></div>
+        </section>
+
+        <!-- Recently Viewed Section -->
+        <section id="recently-viewed-section" class="mb-5" style="display:none;">
+            <div class="d-flex align-items-center mb-3">
+                <svg width="18" height="18" fill="currentColor" class="me-2 text-muted" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg>
+                <h5 class="fw-bold mb-0" data-i18n="recent">Recently Viewed Items</h5>
+            </div>
+            <div id="recently-viewed-list" class="d-flex gap-3 overflow-x-auto pb-2"></div>
+        </section>
+    </main>
+    <!-- Product Details Modal -->
+    <div class="modal fade" id="productModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 rounded-5 overflow-hidden">
+                <div class="modal-body p-4 text-center">
+                    
+                    <div class="position-relative d-inline-block w-100 mb-2">
+                        <img id="modal-img" src="" loading="lazy" class="img-fluid rounded-4 mb-2 cursor-pointer product-main-img" style="max-height: 280px; object-fit: cover; width: 100%;" onclick="openLightbox(this.src)" title="Click to zoom">
+                        <button class="btn btn-light rounded-circle position-absolute top-0 end-0 m-2 shadow-sm p-2" onclick="shareProduct()" title="Share">
+                            <i class="bi bi-share-fill"></i>
+                        </button>
+                    </div>
+
+                    <!-- Dynamic Flavor Variant Swatches -->
+                    <div class="mb-3" id="variant-swatches-container" style="display: none;">
+                        <label class="fw-bold small text-muted text-uppercase d-block mb-2">Select Flavor:</label>
+                        <div id="modal-flavor-swatches" class="d-flex justify-content-center gap-2 flex-wrap"></div>
+                    </div>
+
+                    <div id="modal-thumbnails" class="d-flex justify-content-center gap-2 mb-3 overflow-auto"></div>
+
+                    <div class="d-flex justify-content-center gap-2 mb-2" id="modal-tags">
+                        <span id="modal-category" class="badge bg-secondary">Category</span>
+                    </div>
+
+                    <h4 id="modal-name" class="fw-bold mb-1">Product Name</h4>
+                    <p id="modal-price-container" class="mb-1"></p>
+
+                    <div id="modal-stock-status" class="mb-2"></div>
+
+                    <div class="mb-3">
+                        <span id="modal-avg-stars" class="fs-5"></span>
+                        <span id="modal-rating-text" class="small text-muted ms-1"></span>
+                    </div>
+
+                    <div class="text-start bg-cream-soft p-3 rounded-4 mb-4">
+                        <h6 class="fw-bold small text-uppercase text-muted mb-1">Details & Specs</h6>
+                        <p id="modal-desc" class="small mb-0" style="white-space: pre-line;">No details provided.</p>
+                    </div>
+
+                    <div id="modal-action-container">
+                        <button id="modal-add-btn" class="btn btn-luxury w-100 py-3 rounded-pill mb-4">ADD TO BAG</button>
+                    </div>
+
+                    <!-- Related Products Carousel -->
+                    <div class="text-start border-top pt-4 mb-4" id="related-products-section">
+                        <h6 class="fw-bold small text-uppercase text-muted mb-3">You Might Also Like</h6>
+                        <div class="d-flex gap-3 overflow-auto pb-2" id="related-products-list"></div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Reviews -->
+                    <div id="review-form-container" class="text-start bg-cream p-3 rounded-4 mb-4">
+                        <h6 class="fw-bold small text-uppercase text-muted mb-2">Leave a Review</h6>
+                        <div class="mb-2">
+                            <span class="small fw-bold me-2">Your Rating:</span>
+                            <div id="review-stars-input" class="star-rating d-inline-block" style="font-size: 1.3rem; cursor: pointer;">
+                                <i class="bi bi-star star-opt text-secondary" onclick="selectStar(1)"></i>
+                                <i class="bi bi-star star-opt text-secondary" onclick="selectStar(2)"></i>
+                                <i class="bi bi-star star-opt text-secondary" onclick="selectStar(3)"></i>
+                                <i class="bi bi-star star-opt text-secondary" onclick="selectStar(4)"></i>
+                                <i class="bi bi-star star-opt text-secondary" onclick="selectStar(5)"></i>
+                            </div>
+                        </div>
+                        <input type="text" id="review-author" class="form-control mb-2 rounded-pill small" placeholder="Your Name (Optional)">
+                        <textarea id="review-comment" class="form-control mb-2 rounded-4 small" rows="2" placeholder="Your experience with this item..."></textarea>
+                        <button id="submit-review-btn" class="btn btn-dark btn-sm rounded-pill px-4">Submit Review</button>
+                    </div>
+
+                    <div class="text-start">
+                        <h6 class="fw-bold small text-uppercase text-muted mb-3">Customer Reviews</h6>
+                        <div id="modal-reviews-list" class="d-flex flex-column gap-2"></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Firebase & Application Logic -->
-    <script type="module">
-        import { db, ref, push, set, onValue, remove } from './firebase-config.js';
 
-        let productsData = {};
-        const fileInput = document.getElementById('p-file');
-        const dropZone = document.getElementById('drop-zone');
-        const hiddenImgBase64 = document.getElementById('p-img-base64');
-        const uploadStatus = document.getElementById('upload-status');
+    <!-- Sort Modal -->
+    <div class="modal fade" id="sortModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold" data-i18n="sortBy">Sort By</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body d-grid gap-2">
+                    <button class="btn btn-outline-dark rounded-pill text-start" onclick="window.selectSortOption('default', 'Default', this)" data-i18n="sortDef">Default</button>
+                    <button class="btn btn-outline-dark rounded-pill text-start" onclick="window.selectSortOption('price-asc', 'Price: Low to High', this)" data-i18n="sortLow">Price: Low to High</button>
+                    <button class="btn btn-outline-dark rounded-pill text-start" onclick="window.selectSortOption('price-desc', 'Price: High to Low', this)" data-i18n="sortHigh">Price: High to Low</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        dropZone.onclick = () => fileInput.click();
+    <!-- Filter Modal -->
+    <div class="modal fade" id="filterModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold" data-i18n="filterItems">Filter Items</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small" data-i18n="maxPrice">Max Price (EGP)</label>
+                        <input type="range" class="form-range" id="maxPriceSlider" min="0" max="50000" step="500" value="50000">
+                        <div id="priceRangeDisplay" class="small text-muted text-center">0 - 50,000 EGP</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Flavor</label>
+                        <select id="flavorFilter" class="form-select rounded-pill">
+                            <option value="All">All Flavors</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Size</label>
+                        <select id="sizeFilter" class="form-select rounded-pill">
+                            <option value="All">All Sizes</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill" onclick="window.resetFilters()" data-i18n="reset">Reset</button>
+                    <button type="button" class="btn btn-dark rounded-pill" data-bs-dismiss="modal" data-i18n="apply">Apply</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Aggressive Canvas Compression
-        // Forces maximum dimensions of 300px and 35% JPEG quality.
-        function compressImageToBase64(file, maxDimension = 300, quality = 0.35) {
-            return new Promise((resolve, reject) => {
-                if (!file) return resolve('');
+    <!-- Core Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="script.js"></script>
 
-                if (!file.type.startsWith('image/')) {
-                    alert("Please select a valid image file.");
-                    return resolve('');
+    <!-- Custom Script: Dark Mode & EN/AR Translation Logic -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- 1. DARK MODE LOGIC ---
+            const toggleBtn = document.getElementById('darkModeToggle');
+            const body = document.body;
+            const currentTheme = localStorage.getItem('theme') || 'light';
+
+            if (currentTheme === 'dark') body.classList.add('dark-mode');
+
+            toggleBtn.addEventListener('click', () => {
+                body.classList.toggle('dark-mode');
+                localStorage.setItem('theme', body.classList.contains('dark-mode') ? 'dark' : 'light');
+            });
+
+            // --- 2. TRANSLATION LOGIC (INCLUDING CUSTOM PRODUCTS) ---
+            const langBtn = document.getElementById('langToggle');
+            let currentLang = localStorage.getItem('lang') || 'en';
+            
+            // Standard UI Dictionary
+            const uiDict = {
+                en: {
+                    brand: "Supermarket", deliverTo: "Deliver to", selectSpot: "Select Delivery Spot",
+                    sort: "Sort", filter: "Filter", heroBadge: "Daily Supermarket Deals",
+                    heroTitle: "Your Everyday Pantry & Grocery Store", 
+                    heroSub: "Shop everyday essentials, packaged goods, and daily items delivered fast.",
+                    recent: "Recently Viewed Items", sortBy: "Sort By", sortDef: "Default", 
+                    sortLow: "Price: Low to High", sortHigh: "Price: High to Low", filterItems: "Filter Items",
+                    maxPrice: "Max Price (EGP)", reset: "Reset", apply: "Apply", searchPlace: "Search products..."
+                },
+                ar: {
+                    brand: "سوبر ماركت", deliverTo: "التوصيل إلى", selectSpot: "اختر موقع التوصيل",
+                    sort: "ترتيب", filter: "تصفية", heroBadge: "عروض السوبر ماركت اليومية",
+                    heroTitle: "بقالتك ومتجرك اليومي", 
+                    heroSub: "تسوق الأساسيات اليومية، والسلع المعبأة، والعناصر اليومية تصلك بسرعة.",
+                    recent: "العناصر المعروضة مؤخراً", sortBy: "ترتيب حسب", sortDef: "الافتراضي", 
+                    sortLow: "السعر: من الأقل للأعلى", sortHigh: "السعر: من الأعلى للأقل", filterItems: "تصفية العناصر",
+                    maxPrice: "الحد الأقصى للسعر (جنيه)", reset: "إعادة ضبط", apply: "تطبيق", searchPlace: "ابحث عن المنتجات..."
                 }
+            };
 
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        let width = img.width;
-                        let height = img.height;
+            // Custom Product Name Dictionary
+            const productDict = {
+                "لبن بخيره": "Laban Bekheiro",
+                "Laban Bekheiro": "لبن بخيره"
+            };
 
-                        if (width > height) {
-                            if (width > maxDimension) {
-                                height = Math.round((height * maxDimension) / width);
-                                width = maxDimension;
-                            }
-                        } else {
-                            if (height > maxDimension) {
-                                width = Math.round((width * maxDimension) / height);
-                                height = maxDimension;
-                            }
+            function applyTranslation() {
+                // Set RTL/LTR and update Bootstrap input group layout orientation natively
+                document.documentElement.dir = currentLang === 'ar' ? 'rtl' : 'ltr';
+                langBtn.innerText = currentLang === 'ar' ? 'English' : 'عربي';
+
+                // Translate Static UI Elements
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (uiDict[currentLang][key]) el.innerText = uiDict[currentLang][key];
+                });
+
+                // Translate Placeholders
+                const searchInput = document.querySelector('.translatable-placeholder');
+                if (searchInput) searchInput.placeholder = uiDict[currentLang].searchPlace;
+
+                // Translate Dynamic s Currently on Screen
+                translateDynamicNodes();
+            }
+
+            // Function to swap specific product names dynamically
+            function translateDynamicNodes() {
+                const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+                let node;
+                while (node = walker.nextNode()) {
+                    let text = node.nodeValue.trim();
+                    if (text && productDict[text]) {
+                        if (currentLang === 'ar' && text === "Laban Bekheiro") {
+                            node.nodeValue = node.nodeValue.replace("Laban Bekheiro", "لبن بخيره");
+                        } else if (currentLang === 'en' && text === "لبن بخيره") {
+                            node.nodeValue = node.nodeValue.replace("لبن بخيره", "Laban Bekheiro");
                         }
-
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-
-                        ctx.imageSmoothingEnabled = true;
-                        ctx.imageSmoothingQuality = 'high';
-                        ctx.drawImage(img, 0, 0, width, height);
-
-                        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-
-                        // Reclaim canvas memory explicitly
-                        canvas.width = 0;
-                        canvas.height = 0;
-
-                        resolve(compressedDataUrl);
-                    };
-                    img.onerror = (err) => reject(err);
-                };
-                reader.onerror = (err) => reject(err);
-            });
-        }
-
-        // Main Image File Upload Handler
-      // Main Image File Upload Handler with Preview
-fileInput.onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    uploadStatus.innerHTML = `<span class="spinner-border spinner-border-sm text-secondary"></span> Compressing...`;
-    try {
-        const base64 = await compressImageToBase64(file);
-        hiddenImgBase64.value = base64;
-        const sizeInKB = Math.round((base64.length * (3 / 4)) / 1024);
-        
-        // Show the image preview inside the drop zone
-        uploadStatus.innerHTML = `
-            <img src="${base64}" style="max-height: 120px; border-radius: 10px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-            <div class="text-success fw-bold small"><i class="bi bi-check-circle"></i> Ready (${sizeInKB} KB)</div>
-        `;
-    } catch (err) {
-        console.error(err);
-        uploadStatus.innerText = "Error processing image.";
-    }
-};
-
-        // Multi-Color Variant Creator
-        window.addVariantRow = (color = "", imgBase64 = "") => {
-            const container = document.getElementById('variants-container');
-            const row = document.createElement('div');
-            row.className = "variant-row d-flex gap-2 align-items-center";
-            row.innerHTML = `
-                <input type="text" class="form-control form-control-sm variant-color" placeholder="Color (e.g. Blue)" value="${color}">
-                <input type="hidden" class="variant-img-base64" value="${imgBase64}">
-                <input type="file" class="d-none variant-file" accept="image/*">
-                <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap variant-upload-btn" onclick="this.previousElementSibling.click()">
-                    ${imgBase64 ? 'Image Ready' : 'Upload Image'}
-                </button>
-                <button type="button" class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">X</button>
-            `;
-
-            const variantFileInput = row.querySelector('.variant-file');
-            const variantBtn = row.querySelector('.variant-upload-btn');
-            const variantHiddenInput = row.querySelector('.variant-img-base64');
-
-            variantFileInput.onchange = async (e) => {
-                const f = e.target.files[0];
-                if (!f) return;
-                variantBtn.innerText = "Compressing...";
-                const base64 = await compressImageToBase64(f);
-                variantHiddenInput.value = base64;
-                variantBtn.innerText = "Image Ready!";
-                variantBtn.classList.replace('btn-outline-secondary', 'btn-outline-success');
-            };
-
-            container.appendChild(row);
-        };
-
-        // Save or Update Product
-        window.saveProduct = async () => {
-            const saveBtn = document.getElementById('save-btn');
-            const id = document.getElementById('editing-id').value;
-            const name = document.getElementById('p-name').value.trim();
-            const category = document.getElementById('p-category').value.trim() || "Other";
-            const phoneType = document.getElementById('p-phonetype').value.trim() || "";
-            const price = document.getElementById('p-price').value;
-            const discount = document.getElementById('p-discount').value;
-            const stock = document.getElementById('p-stock').value || 5;
-            const description = document.getElementById('p-desc').value.trim();
-            const mainImg = hiddenImgBase64.value;
-
-            if (!name || !price || !mainImg) {
-                return alert("Please fill in the Product Name, Price, and select a Main Image!");
-            }
-
-            const variantRows = document.querySelectorAll('.variant-row');
-            const variants = [];
-            variantRows.forEach(r => {
-                const c = r.querySelector('.variant-color').value.trim();
-                const img = r.querySelector('.variant-img-base64').value;
-                if (c) variants.push({ color: c, img: img || mainImg });
-            });
-
-            saveBtn.disabled = true;
-            saveBtn.innerText = "SAVING...";
-
-            const data = {
-                name,
-                category,
-                phoneType,
-                price: Number(price),
-                discountPrice: discount ? Number(discount) : null,
-                stock: Number(stock),
-                description: description || "",
-                img: mainImg,
-                variants
-            };
-
-            try {
-                if (id) {
-                    await set(ref(db, 'products/' + id), data);
-                } else {
-                    await push(ref(db, 'products'), data);
-                }
-                alert(id ? "Product updated successfully!" : "Product added successfully!");
-                resetForm();
-            } catch (err) {
-                console.error("Save error:", err);
-                alert("Database Save Error: " + err.message);
-            } finally {
-                saveBtn.disabled = false;
-            }
-        };
-
-        // Edit Product Function
-        window.editProduct = (id) => {
-            const p = productsData[id];
-            if (!p) return;
-
-            document.getElementById('editing-id').value = id;
-            document.getElementById('p-name').value = p.name || '';
-            document.getElementById('p-category').value = p.category || '';
-            document.getElementById('p-phonetype').value = p.phoneType || '';
-            document.getElementById('p-price').value = p.price || '';
-            document.getElementById('p-discount').value = p.discountPrice || '';
-            document.getElementById('p-stock').value = p.stock ?? 5;
-            document.getElementById('p-desc').value = p.description || '';
-            hiddenImgBase64.value = p.img || '';
-
-            uploadStatus.innerHTML = p.img 
-                ? `<span class="text-success fw-bold"><i class="bi bi-check-circle"></i> Existing Image Loaded</span>` 
-                : `<i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i> Choose Image File`;
-
-            document.getElementById('form-title').innerText = "Edit Product";
-            document.getElementById('save-btn').innerText = "UPDATE PRODUCT";
-            document.getElementById('cancel-edit-btn').classList.remove('d-none');
-
-            const variantsContainer = document.getElementById('variants-container');
-            variantsContainer.innerHTML = "";
-            if (p.variants && p.variants.length > 0) {
-                p.variants.forEach(v => addVariantRow(v.color, v.img));
-            }
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        // Reset Form Fields
-        window.resetForm = () => {
-            document.getElementById('editing-id').value = '';
-            document.getElementById('p-name').value = '';
-            document.getElementById('p-category').value = '';
-            document.getElementById('p-phonetype').value = '';
-            document.getElementById('p-price').value = '';
-            document.getElementById('p-discount').value = '';
-            document.getElementById('p-stock').value = '5';
-            document.getElementById('p-desc').value = '';
-            hiddenImgBase64.value = '';
-            fileInput.value = '';
-            uploadStatus.innerHTML = `<i class="bi bi-cloud-arrow-up fs-4 d-block mb-1"></i> Choose Image File`;
-            document.getElementById('form-title').innerText = "Add Product";
-            document.getElementById('save-btn').innerText = "SAVE TO SHOP";
-            document.getElementById('cancel-edit-btn').classList.add('d-none');
-            document.getElementById('variants-container').innerHTML = "";
-        };
-
-        // Optimized Listener using DocumentFragment to prevent DOM thrashing
-        onValue(ref(db, 'products'), (snap) => {
-            productsData = snap.val() || {};
-            const list = document.getElementById('inventory-list');
-            const fragment = document.createDocumentFragment();
-
-            for (let id in productsData) {
-                const p = productsData[id];
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>
-                        <img src="${p.img}" style="width:40px; height:40px; object-fit:cover; border-radius:8px;" alt="${p.name}">
-                    </td>
-                    <td>
-                        <div class="fw-bold small">${p.name}</div>
-                        <small class="text-muted">${p.price} EGP</small>
-                    </td>
-                    <td class="text-end text-nowrap">
-                        <button class="btn btn-sm btn-outline-dark me-1" onclick="editProduct('${id}')" title="Edit"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-danger" onclick="deleteProduct('${id}')" title="Delete"><i class="bi bi-trash"></i></button>
-                    </td>
-                `;
-                fragment.appendChild(tr);
-            }
-
-            list.innerHTML = "";
-            list.appendChild(fragment);
-        });
-
-        // Delete Product
-        window.deleteProduct = (id) => {
-            if (confirm("Are you sure you want to delete this product?")) {
-                remove(ref(db, 'products/' + id)).catch(err => console.error("Delete error:", err));
-            }
-        };
-        // ONE-TIME BATCH COMPRESSION SCRIPT
-window.batchCompressDatabase = async () => {
-    const btn = document.getElementById('fix-db-btn');
-    if (!confirm("This will automatically compress all existing images in your database. Proceed?")) return;
-
-    btn.disabled = true;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Compressing... (Do not close tab)`;
-
-    try {
-        const updates = {};
-        let count = 0;
-
-        // Helper function to compress a raw Base64 string
-        const compressString = (base64Str) => {
-            return new Promise((resolve) => {
-                if (!base64Str || !base64Str.startsWith('data:image')) return resolve(base64Str);
-                
-                const img = new Image();
-                img.onload = () => {
-                    let w = img.width; 
-                    let h = img.height;
-                    const max = 300;
-
-                    if (w > h && w > max) { h = Math.round((h * max) / w); w = max; }
-                    else if (h > max) { w = Math.round((w * max) / h); h = max; }
-
-                    const canvas = document.createElement('canvas');
-                    canvas.width = w; 
-                    canvas.height = h;
-                    const ctx = canvas.getContext('2d');
-                    
-                    ctx.imageSmoothingEnabled = true;
-                    ctx.imageSmoothingQuality = 'high';
-                    ctx.drawImage(img, 0, 0, w, h);
-                    
-                    resolve(canvas.toDataURL('image/jpeg', 0.35));
-                };
-                img.src = base64Str;
-            });
-        };
-
-        // Loop through all existing products
-        for (let id in productsData) {
-            let product = { ...productsData[id] }; // Copy the product
-
-            // Compress main image
-            if (product.img) {
-                product.img = await compressString(product.img);
-            }
-
-            // Compress all variant images if they exist
-            if (product.variants && product.variants.length > 0) {
-                for (let i = 0; i < product.variants.length; i++) {
-                    if (product.variants[i].img) {
-                        product.variants[i].img = await compressString(product.variants[i].img);
                     }
                 }
             }
 
-            updates[id] = product;
-            count++;
-        }
+            // Toggle Language on Click
+            langBtn.addEventListener('click', () => {
+                currentLang = currentLang === 'en' ? 'ar' : 'en';
+                localStorage.setItem('lang', currentLang);
+                applyTranslation();
+            });
 
-        // Overwrite the database with the newly compressed data
-        await set(ref(db, 'products'), updates);
-        
-        alert(`Success! ${count} products were compressed. Firefox should no longer crash.`);
-        btn.innerHTML = `<i class="bi bi-check-circle"></i> Fixed!`;
-        btn.classList.replace('btn-warning', 'btn-success');
-        
-    } catch (err) {
-        console.error(err);
-        alert("An error occurred during compression.");
-        btn.disabled = false;
-        btn.innerHTML = "Try Again";
-    }
-};
+            // Run on initial load
+            applyTranslation();
+
+            // --- 3. MUTATION OBSERVER ---
+            const observer = new MutationObserver((mutations) => {
+                let shouldTranslate = false;
+                mutations.forEach(mutation => {
+                    if (mutation.addedNodes.length > 0) shouldTranslate = true;
+                });
+                if (shouldTranslate) translateDynamicNodes();
+            });
+            
+            observer.observe(document.getElementById('product-list'), { childList: true, subtree: true });
+        });
     </script>
-</body>
+    <div class="modal fade" id="cartModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 rounded-5">
+                <div class="modal-body p-4">
+                    <h5 class="fw-bold mb-4">Your Bag</h5>
+                    <div id="cart-items-list" class="mb-4"></div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-7">
+                            <input type="text" id="name" class="form-control mb-2 bg-cream-soft border-0 rounded-pill" placeholder="Full Name">
+                            <input type="tel" id="phone" class="form-control mb-2 bg-cream-soft border-0 rounded-pill" placeholder="Phone (01xxxxxxxxx)">
+                            
+                            <div class="mb-2">
+                                <label class="fw-bold small text-muted mb-1 d-block"><i class="bi bi-geo-alt-fill text-danger"></i> Delivery Pin in Alexandria:</label>
+                                <div id="delivery-map" class="rounded-4 mb-2 shadow-sm" style="height: 200px; width: 100%;"></div>
+                                <input type="text" id="selectedAddress" class="form-control bg-cream-soft border-0 rounded-pill small" readonly placeholder="Selected Location Coordinates">
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                           <!-- Replace light container wrapper -->
+<div class="cart-checkout-box p-4 text-center mt-3">
+    <div class="fs-4 fw-bold text-white mb-3">
+        <span id="total-price">0</span> EGP
+    </div>
 
+  <button class="btn btn-dark border border-white w-100 py-3 rounded-pill mb-2 fw-bold text-uppercase" onclick="window.confirmOrder()">
+    PLACE ORDER
+</button>
+
+    <button class="btn btn-success w-100 py-3 rounded-pill fw-bold" onclick="window.orderViaWhatsApp()">
+        <i class="bi bi-whatsapp me-2"></i>Order via WhatsApp
+    </button>
+</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Success Modal: shows assigned branch + delivery confirmation code -->
+    <div class="modal fade" id="orderSuccessModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0 rounded-5 text-center p-4">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <svg width="52" height="52" fill="#198754" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/></svg>
+                    </div>
+                    <h5 class="fw-bold mb-1">Order Placed!</h5>
+                    <p class="text-muted small mb-3">Your order was sent to the nearest available branch:</p>
+                    <div class="bg-cream-soft rounded-4 p-3 mb-3">
+                        <div class="fw-bold" id="order-success-store">Store Branch</div>
+                    </div>
+                    <p class="small text-muted mb-1">Give this code to your delivery driver to confirm delivery:</p>
+                    <div class="display-6 fw-bold text-accent mb-3 letter-spacing-2" id="order-success-code" style="letter-spacing: 6px;">0000</div>
+                    <button class="btn btn-dark w-100 rounded-pill py-2 fw-bold" data-bs-dismiss="modal">Done</button>
+                </div>
+            </div>
+        </div>
+    </div>    <!-- My Orders Modal: local order history with live status + cancel -->
+    <div class="modal fade" id="myOrdersModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/><path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/></svg>
+                        My Orders
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="small text-muted">Orders you've placed on this device. Your delivery code is here if you forgot it, and you can cancel an order before it's picked up.</p>
+                    <div id="my-orders-list"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wishlist Modal -->
+    <div class="modal fade" id="wishlistModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                        <svg width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="m8 2.748-.717-.737C5.6.281 2.514.878 1.4 3.053c-.523 1.023-.641 2.5.314 4.385.92 1.815 2.834 3.989 6.286 6.357 3.452-2.368 5.365-4.542 6.286-6.357.955-1.886.838-3.362.314-4.385C13.486.878 10.4.28 8.717 2.01zM8 15C-7.333 4.868 3.279-3.04 7.824 1.143q.09.083.176.171a3 3 0 0 1 .176-.17C12.72-3.042 23.333 4.867 8 15"/></svg>
+                        Your Wishlist
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="wishlist-items-list" class="d-flex flex-column gap-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lightbox Modal (product image zoom) -->
+    <div class="modal fade" id="lightboxModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-xl">
+            <div class="modal-content bg-transparent border-0">
+                <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3 z-3" data-bs-dismiss="modal"></button>
+                <img id="lightbox-img" src="" class="img-fluid rounded-4 mx-auto" style="max-height: 85vh; object-fit: contain;">
+            </div>
+        </div>
+    </div>
+
+    <!-- "Added to bag" toast -->
+    <div id="toast" class="luxury-toast">
+        <i class="bi bi-check-circle-fill me-1"></i> Added to Bag!
+    </div>
+
+</body>
 </html>
