@@ -1,24 +1,45 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+// firebase-config.js
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import {
   getDatabase,
   ref,
   push,
   set,
+  update,
+  get,
   onValue,
   remove,
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB8nGEaOG7yRVZv_lBbWny3Zty03bbLwxE",
-  authDomain: "shhahd-3ada6.firebaseapp.com",
-  databaseURL: "https://shhahd-3ada6-default-rtdb.firebaseio.com",
-  projectId: "shhahd-3ada6",
-  storageBucket: "shhahd-3ada6.firebasestorage.app",
-  messagingSenderId: "26278228643",
-  appId: "1:26278228643:web:62ea9854b1f250d7b84516"
+
+  apiKey: "AIzaSyA-wV9myRJyD6eTp-Ak3mLWU8qnWKr30qw",
+
+  authDomain: "letsgo-c4a7c.firebaseapp.com",
+
+  databaseURL: "https://letsgo-c4a7c-default-rtdb.firebaseio.com",
+
+  projectId: "letsgo-c4a7c",
+
+  storageBucket: "letsgo-c4a7c.firebasestorage.app",
+
+  messagingSenderId: "327919496932",
+
+  appId: "1:327919496932:web:fa47bd11a0d13e7c97c6f1",
+
+  measurementId: "G-HB81DELVQ0"
+
 };
 
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase (guarded so re-importing this file never double-initializes)
+const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getDatabase(app);
+const storage = getStorage(app);
 
-export { db, ref, push, set, onValue, remove };
+export { db, ref, push, set, update, get, onValue, remove, storage, storageRef, uploadBytes, getDownloadURL };
